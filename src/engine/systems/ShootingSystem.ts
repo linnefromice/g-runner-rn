@@ -6,6 +6,8 @@ import { createPlayerBullet } from '@/engine/entities/Bullet';
 
 let fireTimer = 0;
 
+const SPREAD_ANGLE = 15; // degrees between spread bullets
+
 export function createShootingSystem(getForm: () => MechaFormDefinition): GameSystem<GameEntities> {
   return (entities, { time }) => {
     const form = getForm();
@@ -19,19 +21,40 @@ export function createShootingSystem(getForm: () => MechaFormDefinition): GameSy
     if (!p.active) return;
 
     const bulletConfig = form.bulletConfig;
-    const damage = 10 * form.attackMultiplier; // base ATK from store would be injected
+    const damage = 10 * form.attackMultiplier;
+    const isHoming = form.specialAbility === 'homing_invincible';
+    const count = bulletConfig.count;
+    const centerX = p.x + p.width / 2;
 
-    // Find an inactive bullet slot
-    const slot = entities.playerBullets.find((b) => !b.active);
-    if (!slot) return; // pool exhausted
-
-    const bullet = createPlayerBullet(
-      p.x + p.width / 2,
-      p.y,
-      damage,
-      { width: bulletConfig.width, height: bulletConfig.height, speed: bulletConfig.speed }
-    );
-    Object.assign(slot, bullet);
-    slot.active = true;
+    if (count <= 1) {
+      // Single bullet (original behavior)
+      const slot = entities.playerBullets.find((b) => !b.active);
+      if (!slot) return;
+      const bullet = createPlayerBullet(centerX, p.y, damage, {
+        width: bulletConfig.width,
+        height: bulletConfig.height,
+        speed: bulletConfig.speed,
+        homing: isHoming,
+      });
+      Object.assign(slot, bullet);
+      slot.active = true;
+    } else {
+      // Multi-bullet spread
+      const halfSpread = ((count - 1) * SPREAD_ANGLE) / 2;
+      for (let i = 0; i < count; i++) {
+        const slot = entities.playerBullets.find((b) => !b.active);
+        if (!slot) break;
+        const angleDeg = -halfSpread + i * SPREAD_ANGLE;
+        const offsetX = Math.tan((angleDeg * Math.PI) / 180) * 20;
+        const bullet = createPlayerBullet(centerX + offsetX, p.y, damage, {
+          width: bulletConfig.width,
+          height: bulletConfig.height,
+          speed: bulletConfig.speed,
+          homing: isHoming,
+        });
+        Object.assign(slot, bullet);
+        slot.active = true;
+      }
+    }
   };
 }
