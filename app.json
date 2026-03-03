@@ -30,7 +30,11 @@
     },
     "plugins": [
       "expo-router",
-      "@shopify/react-native-skia"
-    ]
+      "@shopify/react-native-skia",
+      "expo-updates"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
