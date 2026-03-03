@@ -55,28 +55,43 @@ function FormIndicator() {
 function ComboGauge() {
   const comboCount = useGameSessionStore((s) => s.comboCount);
   const isAwakened = useGameSessionStore((s) => s.isAwakened);
+  const awakenedWarning = useGameSessionStore((s) => s.awakenedWarning);
 
   if (isAwakened) {
     return (
       <View style={styles.comboContainer}>
-        <Text style={[styles.comboText, { color: COLORS.scoreYellow }]}>AWAKENED</Text>
+        <Text
+          style={[
+            styles.comboText,
+            { color: awakenedWarning ? COLORS.hpCritical : COLORS.scoreYellow },
+          ]}
+        >
+          {awakenedWarning ? 'FADING!' : 'AWAKENED'}
+        </Text>
       </View>
     );
   }
 
   return (
     <View style={styles.comboContainer}>
-      {Array.from({ length: COMBO_THRESHOLD }, (_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.comboSegment,
-            {
-              backgroundColor: i < comboCount ? COLORS.neonGreen : '#333',
-            },
-          ]}
-        />
-      ))}
+      {Array.from({ length: COMBO_THRESHOLD }, (_, i) => {
+        const isLit = i < comboCount;
+        return (
+          <View
+            key={i}
+            style={[
+              styles.comboSegment,
+              {
+                backgroundColor: isLit ? COLORS.neonGreen : '#333',
+                borderColor: isLit ? COLORS.neonGreen : '#555',
+                shadowColor: isLit ? COLORS.neonGreen : 'transparent',
+                shadowOpacity: isLit ? 0.8 : 0,
+                shadowRadius: isLit ? 4 : 0,
+              },
+            ]}
+          />
+        );
+      })}
     </View>
   );
 }
