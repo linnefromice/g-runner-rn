@@ -40,3 +40,4 @@ yarn-error.*
 
 # AI local tasks (per pipeline-manifest.md)
 .ai/
+.worktrees/
