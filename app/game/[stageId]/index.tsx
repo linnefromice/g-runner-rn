@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AppState, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { useSharedValue } from 'react-native-reanimated';
+import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useGameLoop, type GameSystem } from '@/engine/GameLoop';
 import { GameCanvas, type RenderEntity } from '@/rendering/GameCanvas';
 import { HUD } from '@/ui/HUD';
@@ -157,10 +157,12 @@ export default function GameScreen() {
 
   return (
     <GestureDetector gesture={gesture}>
-      <View style={styles.container}>
-        <GameCanvas renderData={renderData} scrollY={scrollYShared} scale={scale} />
+      <Animated.View style={styles.container}>
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <GameCanvas renderData={renderData} scrollY={scrollYShared} scale={scale} />
+        </View>
         <HUD onPause={handlePause} onEXBurst={handleEXBurst} />
-      </View>
+      </Animated.View>
     </GestureDetector>
   );
 }
