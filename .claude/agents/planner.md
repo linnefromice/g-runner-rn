@@ -38,7 +38,7 @@ model: opus
 sd-g-runner/
 ├── app/              # expo-router pages (screens, navigation)
 ├── src/
-│   ├── engine/       # Game logic (RNGE systems, entities, collision) — pure TS, no React
+│   ├── engine/       # Game logic (useGameLoop systems, entities, collision) — pure TS, no React
 │   ├── rendering/    # Skia drawing (reads engine state, renders to Canvas) — no game logic
 │   ├── stores/       # Zustand stores bridging engine↔UI
 │   ├── game/         # Data definitions (forms, stages, difficulty, scoring)
@@ -129,8 +129,8 @@ sd-g-runner/
 
 ### Phase 2: エンジンロジック
 
-3. **RNGE システムの作成** (ファイル: `src/engine/systems/[feature]-system.ts`)
-   - アクション: ゲームロジックを RNGE system として実装
+3. **useGameLoop システムの作成** (ファイル: `src/engine/systems/[feature]-system.ts`)
+   - アクション: ゲームロジックを useGameLoop system として実装
    - 依存関係: ステップ2
 
 ### Phase 3: レンダリング
@@ -189,7 +189,7 @@ export function HpBar() {
 ### エンティティ座標の扱い
 
 ```typescript
-// ✅ RNGE system で plain object を直接変異
+// ✅ useGameLoop system で plain object を直接変異
 entity.position.x += entity.velocity.vx * delta;
 
 // ❌ useState/setState は絶対に使わない

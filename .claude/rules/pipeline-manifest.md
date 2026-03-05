@@ -138,7 +138,7 @@ tasks:
       description: |
           BossSystem（AI、攻撃パターン、フェーズ遷移）を
           src/engine/systems/ に追加する。
-          RNGE system として実装し、エンティティを直接変異させる。
+          useGameLoop system として実装し、エンティティを直接変異させる。
       files:
           - src/engine/systems/boss-system.ts
       depends_on: [data]
