@@ -24,13 +24,14 @@ import { createSpawnSystem } from '@/engine/systems/SpawnSystem';
 import { collisionSystem } from '@/engine/systems/CollisionSystem';
 import { gateSystem } from '@/engine/systems/GateSystem';
 import { iframeSystem } from '@/engine/systems/IFrameSystem';
+import { transformGaugeSystem } from '@/engine/systems/TransformGaugeSystem';
 import { awakenedSystem } from '@/engine/systems/AwakenedSystem';
 import { bossSystem } from '@/engine/systems/BossSystem';
 import { gameOverSystem } from '@/engine/systems/GameOverSystem';
 import { createSyncRenderSystem } from '@/engine/systems/SyncRenderSystem';
 
 export default function GameScreen() {
-  const { stageId, form } = useLocalSearchParams<{ stageId: string; form?: string }>();
+  const { stageId, form, secondary } = useLocalSearchParams<{ stageId: string; form?: string; secondary?: string }>();
   const router = useRouter();
   const { width, height } = useWindowDimensions();
   const stageIdNum = Number(stageId) || 1;
@@ -57,8 +58,9 @@ export default function GameScreen() {
     useGameSessionStore.getState().resetSession(
       stageIdNum,
       (form as MechaFormId) || undefined,
+      (secondary as MechaFormId) || undefined,
     );
-  }, [stageIdNum, form]);
+  }, [stageIdNum, form, secondary]);
 
   // Watch for game-over or stage-clear
   useEffect(() => {
@@ -85,6 +87,7 @@ export default function GameScreen() {
     createShootingSystem(getForm),
     enemyAISystem,
     createSpawnSystem(stage),
+    transformGaugeSystem,
     awakenedSystem,
     collisionSystem,
     gateSystem,
@@ -185,6 +188,10 @@ export default function GameScreen() {
     }
   }, []);
 
+  const handleTransform = useCallback(() => {
+    useGameSessionStore.getState().activateTransform();
+  }, []);
+
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View style={styles.container}>
@@ -194,6 +201,7 @@ export default function GameScreen() {
         <HUD
           onPause={handlePause}
           onEXBurst={handleEXBurst}
+          onTransform={handleTransform}
           entitiesRef={entitiesRef}
           stageDuration={stage.duration}
         />
