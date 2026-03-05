@@ -28,7 +28,7 @@ model: opus
 sd-g-runner/
 ├── app/              # expo-router pages
 ├── src/
-│   ├── engine/       # Game logic (RNGE systems)
+│   ├── engine/       # Game logic (useGameLoop systems)
 │   ├── rendering/    # Skia drawing
 │   ├── stores/       # Zustand stores
 │   ├── game/         # Data definitions
@@ -107,7 +107,7 @@ d) 各バッチでgitコミットを作成
 
 | カテゴリ             | ファイル/パターン            | 理由                                     |
 | -------------------- | ---------------------------- | ---------------------------------------- |
-| RNGE システム登録    | `src/engine/systems/*.ts`    | ゲームエンジンから動的に参照される可能性 |
+| useGameLoop システム登録    | `src/engine/systems/*.ts`    | ゲームエンジンから動的に参照される可能性 |
 | ステージ定義         | `src/game/stages/*.ts`       | データ駆動でランタイムに読み込み         |
 | フォーム定義         | `src/game/forms/*.ts`        | MechaFormId で動的参照                   |
 | expo-router ページ   | `app/**/*.tsx`               | ファイルベースルーティング               |

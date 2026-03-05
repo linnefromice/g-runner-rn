@@ -46,7 +46,7 @@ tools: Read, Grep, Glob, WebFetch, WebSearch
 │  ┌──────────────────┴──────────────────────┐             │
 │  │              Game Screen                 │             │
 │  │  ┌──────────┐  ┌────────┐  ┌─────────┐  │             │
-│  │  │  RNGE    │  │  Skia  │  │  HUD    │  │             │
+│  │  │  useGameLoop    │  │  Skia  │  │  HUD    │  │             │
 │  │  │ (engine) │  │(render)│  │ (React) │  │             │
 │  │  └────┬─────┘  └───┬────┘  └────┬────┘  │             │
 │  │       │             │            │        │             │
@@ -74,7 +74,7 @@ app/                   # expo-router pages
 
 src/
 ├── engine/            # Game logic (pure TS, NO React)
-│   ├── systems/       # RNGE systems (movement, collision, spawning, etc.)
+│   ├── systems/       # useGameLoop systems (movement, collision, spawning, etc.)
 │   ├── entities/      # Entity factory functions
 │   └── utils/         # Engine utilities (AABB, math, pool)
 ├── rendering/         # Skia drawing (NO game logic)
@@ -109,7 +109,7 @@ src/
 ```
 ┌────────────────────────────────────────────┐
 │              Engine Layer (pure TS)         │
-│  - RNGE systems                            │
+│  - useGameLoop systems                            │
 │  - Entity mutation (plain JS objects)      │
 │  - Collision detection (AABB)              │
 │  - NO React, NO Skia                       │

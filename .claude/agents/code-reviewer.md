@@ -193,6 +193,29 @@ try {
 | useFrameCallback     | Skia の描画は useFrameCallback 内で実行             |
 | AsyncStorage 乱用    | 毎フレームの読み書きは禁止                          |
 
+### 8. Reanimated + RNGH 安全性（クリティカル）
+
+詳細は `.claude/rules/reanimated-safety.md` を参照。
+
+| チェック項目               | 内容                                                          |
+| -------------------------- | ------------------------------------------------------------- |
+| `.runOnJS(true)` の付与    | entities にアクセスするジェスチャーコールバックに必須          |
+| SharedValue への直接参照   | entities オブジェクトを SharedValue に渡していないか           |
+| ワークレット内の entitiesRef | `useAnimatedStyle`/`useDerivedValue` 内で entities を参照禁止 |
+| SharedValue の書き込み元   | SyncRenderSystem のみが SharedValue に書き込むこと            |
+
+```typescript
+// ❌ Fatal: ジェスチャーコールバックに .runOnJS(true) がない
+const pan = Gesture.Pan().onUpdate((e) => {
+  entitiesRef.current.player.x = e.absoluteX; // Reanimated 4.x がフリーズ
+});
+
+// ✅ Good: runOnJS(true) で JS スレッド実行
+const pan = Gesture.Pan().runOnJS(true).onUpdate((e) => {
+  entitiesRef.current.player.x = e.absoluteX;
+});
+```
+
 ---
 
 ## レビューコメントテンプレート
