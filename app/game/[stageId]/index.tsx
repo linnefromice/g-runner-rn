@@ -17,7 +17,7 @@ import type { MechaFormId } from '@/types/forms';
 
 // Systems
 import { scrollSystem } from '@/engine/systems/ScrollSystem';
-import { movementSystem } from '@/engine/systems/MovementSystem';
+import { createMovementSystem } from '@/engine/systems/MovementSystem';
 import { createShootingSystem } from '@/engine/systems/ShootingSystem';
 import { enemyAISystem } from '@/engine/systems/EnemyAISystem';
 import { createSpawnSystem } from '@/engine/systems/SpawnSystem';
@@ -81,7 +81,7 @@ export default function GameScreen() {
 
   const systemsRef = useRef<GameSystem<GameEntities>[]>([
     scrollSystem,
-    movementSystem,
+    createMovementSystem(getForm),
     createShootingSystem(getForm),
     enemyAISystem,
     createSpawnSystem(stage),
