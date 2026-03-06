@@ -4,11 +4,11 @@ import type { MechaFormDefinition } from '@/types/forms';
 import { BASE_FIRE_INTERVAL } from '@/constants/balance';
 import { createPlayerBullet } from '@/engine/entities/Bullet';
 
-let fireTimer = 0;
-
 const SPREAD_ANGLE = 15; // degrees between spread bullets
 
 export function createShootingSystem(getForm: () => MechaFormDefinition): GameSystem<GameEntities> {
+  let fireTimer = 0;
+
   return (entities, { time }) => {
     const form = getForm();
     const interval = BASE_FIRE_INTERVAL / form.fireRateMultiplier;
