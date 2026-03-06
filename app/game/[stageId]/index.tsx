@@ -26,6 +26,7 @@ import { gateSystem } from '@/engine/systems/GateSystem';
 import { iframeSystem } from '@/engine/systems/IFrameSystem';
 import { transformGaugeSystem } from '@/engine/systems/TransformGaugeSystem';
 import { awakenedSystem } from '@/engine/systems/AwakenedSystem';
+import { exBurstSystem } from '@/engine/systems/EXBurstSystem';
 import { bossSystem } from '@/engine/systems/BossSystem';
 import { gameOverSystem } from '@/engine/systems/GameOverSystem';
 import { createSyncRenderSystem } from '@/engine/systems/SyncRenderSystem';
@@ -89,6 +90,7 @@ export default function GameScreen() {
     createSpawnSystem(stage),
     transformGaugeSystem,
     awakenedSystem,
+    exBurstSystem,
     collisionSystem,
     gateSystem,
     iframeSystem,
@@ -171,21 +173,7 @@ export default function GameScreen() {
   }, [router]);
 
   const handleEXBurst = useCallback(() => {
-    const store = useGameSessionStore.getState();
-    if (store.exGauge >= 100) {
-      // Kill all active enemies
-      const entities = entitiesRef.current;
-      if (entities) {
-        for (const enemy of entities.enemies) {
-          if (enemy.active) {
-            enemy.hp = 0;
-            enemy.active = false;
-            store.addScore(100);
-          }
-        }
-      }
-      store.addExGauge(-100);
-    }
+    useGameSessionStore.getState().activateEXBurst();
   }, []);
 
   const handleTransform = useCallback(() => {

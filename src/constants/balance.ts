@@ -42,6 +42,10 @@ export const EX_GAIN = {
   gatePass: 10,
   bossHit: 2,
 } as const;
+export const EX_BURST_DURATION = 2000;
+export const EX_BURST_WIDTH = 80;
+export const EX_BURST_DAMAGE = 50;
+export const EX_BURST_TICK_INTERVAL = 100;
 
 /** Combo / Awakened (§10) */
 export const COMBO_THRESHOLD = 3;
