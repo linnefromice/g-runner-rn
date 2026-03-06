@@ -1,5 +1,5 @@
 import type { GameSystem } from '@/engine/GameLoop';
-import type { GameEntities, BossEntity } from '@/types/entities';
+import type { GameEntities } from '@/types/entities';
 import {
   BOSS_HOVER_AMPLITUDE,
   BOSS_HOVER_PERIOD,
@@ -23,6 +23,57 @@ export function createBossSystem(): GameSystem<GameEntities> {
   let laserCooldown = 0;
   let useSpread = true;
 
+  function updateLaser(entities: GameEntities, dtMs: number) {
+    const boss = entities.boss!;
+    switch (boss.laserState) {
+      case 'idle': {
+        laserCooldown += dtMs;
+        if (laserCooldown >= BOSS_LASER_COOLDOWN && !useSpread) {
+          boss.laserState = 'warning';
+          boss.laserTimer = BOSS_LASER_WARNING_DURATION;
+          boss.laserX = boss.x + boss.width / 2;
+          boss.laserTickTimer = 0;
+          laserCooldown = 0;
+          useSpread = true;
+        }
+        break;
+      }
+      case 'warning': {
+        boss.laserTimer -= dtMs;
+        if (boss.laserTimer <= 0) {
+          boss.laserState = 'firing';
+          boss.laserTimer = BOSS_LASER_FIRE_DURATION;
+          boss.laserTickTimer = 0;
+        }
+        break;
+      }
+      case 'firing': {
+        boss.laserTimer -= dtMs;
+        boss.laserTickTimer += dtMs;
+
+        if (boss.laserTickTimer >= BOSS_LASER_TICK_INTERVAL) {
+          boss.laserTickTimer -= BOSS_LASER_TICK_INTERVAL;
+          const player = entities.player;
+          if (player.active && !player.isInvincible) {
+            const playerCenterX = player.x + player.width / 2;
+            if (Math.abs(playerCenterX - boss.laserX) <= BOSS_LASER_WIDTH / 2) {
+              const store = useGameSessionStore.getState();
+              store.takeDamage(BOSS_LASER_DAMAGE);
+              player.isInvincible = true;
+              player.invincibleTimer = IFRAME_DURATION;
+              store.resetCombo();
+            }
+          }
+        }
+
+        if (boss.laserTimer <= 0) {
+          boss.laserState = 'idle';
+        }
+        break;
+      }
+    }
+  }
+
   return (entities, { time }) => {
     const boss = entities.boss;
     if (!boss || !boss.active) return;
@@ -45,7 +96,7 @@ export function createBossSystem(): GameSystem<GameEntities> {
 
     // Laser state machine (active in phase 'laser' or 'all')
     if (boss.phase !== 'spread') {
-      updateLaser(entities, boss, dtMs, laserCooldown, useSpread, (v) => { laserCooldown = v; }, (v) => { useSpread = v; });
+      updateLaser(entities, dtMs);
     }
 
     // Spread attack (only when laser is idle)
@@ -65,66 +116,6 @@ export function createBossSystem(): GameSystem<GameEntities> {
       spawnDrones(entities, boss);
     }
   };
-}
-
-function updateLaser(
-  entities: GameEntities,
-  boss: BossEntity,
-  dtMs: number,
-  laserCooldown: number,
-  useSpread: boolean,
-  setLaserCooldown: (v: number) => void,
-  setUseSpread: (v: boolean) => void,
-) {
-  switch (boss.laserState) {
-    case 'idle': {
-      const newCooldown = laserCooldown + dtMs;
-      if (newCooldown >= BOSS_LASER_COOLDOWN && !useSpread) {
-        boss.laserState = 'warning';
-        boss.laserTimer = BOSS_LASER_WARNING_DURATION;
-        boss.laserX = boss.x + boss.width / 2;
-        boss.laserTickTimer = 0;
-        setLaserCooldown(0);
-        setUseSpread(true);
-      } else {
-        setLaserCooldown(newCooldown);
-      }
-      break;
-    }
-    case 'warning': {
-      boss.laserTimer -= dtMs;
-      if (boss.laserTimer <= 0) {
-        boss.laserState = 'firing';
-        boss.laserTimer = BOSS_LASER_FIRE_DURATION;
-        boss.laserTickTimer = 0;
-      }
-      break;
-    }
-    case 'firing': {
-      boss.laserTimer -= dtMs;
-      boss.laserTickTimer += dtMs;
-
-      if (boss.laserTickTimer >= BOSS_LASER_TICK_INTERVAL) {
-        boss.laserTickTimer -= BOSS_LASER_TICK_INTERVAL;
-        const player = entities.player;
-        if (player.active && !player.isInvincible) {
-          const playerCenterX = player.x + player.width / 2;
-          if (Math.abs(playerCenterX - boss.laserX) <= BOSS_LASER_WIDTH / 2) {
-            const store = useGameSessionStore.getState();
-            store.takeDamage(BOSS_LASER_DAMAGE);
-            player.isInvincible = true;
-            player.invincibleTimer = IFRAME_DURATION;
-            store.resetCombo();
-          }
-        }
-      }
-
-      if (boss.laserTimer <= 0) {
-        boss.laserState = 'idle';
-      }
-      break;
-    }
-  }
 }
 
 function fireSpreadShot(entities: GameEntities, boss: NonNullable<GameEntities['boss']>) {

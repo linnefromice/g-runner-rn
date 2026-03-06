@@ -41,7 +41,7 @@ export const gateSystem: GameSystem<GameEntities> = (entities) => {
 
     // Scoring + EX
     store.addScore(SCORE.gatePass);
-    store.addExGauge(EX_GAIN.gatePass);
+    if (!store.isEXBurstActive) store.addExGauge(EX_GAIN.gatePass);
     store.addTransformGauge(TRANSFORM_GAIN_GATE_PASS);
 
     // Combo tracking (§10.2)
