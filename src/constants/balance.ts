@@ -42,6 +42,10 @@ export const EX_GAIN = {
   gatePass: 10,
   bossHit: 2,
 } as const;
+export const EX_BURST_DURATION = 2000;
+export const EX_BURST_WIDTH = 80;
+export const EX_BURST_DAMAGE = 50;
+export const EX_BURST_TICK_INTERVAL = 100;
 
 /** Combo / Awakened (§10) */
 export const COMBO_THRESHOLD = 3;
@@ -54,6 +58,12 @@ export const BOSS_HOVER_PERIOD = 3000;
 export const BOSS_Y_POSITION = 40;
 export const BOSS_SPREAD_COUNT = 5;
 export const BOSS_DRONE_COUNT = 3;
+export const BOSS_LASER_WARNING_DURATION = 1000;
+export const BOSS_LASER_FIRE_DURATION = 1500;
+export const BOSS_LASER_WIDTH = 30;
+export const BOSS_LASER_DAMAGE = 20;
+export const BOSS_LASER_TICK_INTERVAL = 300;
+export const BOSS_LASER_COOLDOWN = 4000;
 
 /** Movement speeds (logical units/sec) */
 export const PLAYER_BULLET_SPEED = 400;
@@ -66,3 +76,6 @@ export const TRANSFORM_GAUGE_MAX = 100;
 export const TRANSFORM_GAIN_ENEMY_KILL = 8;
 export const TRANSFORM_GAIN_GATE_PASS = 12;
 export const TRANSFORM_GAIN_PER_SECOND = 2;
+
+/** Explosion bullet */
+export const EXPLOSION_RADIUS = 40;

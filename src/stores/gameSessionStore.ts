@@ -9,6 +9,7 @@ import {
   COMBO_THRESHOLD,
   AWAKENED_DURATION,
   EX_GAUGE_MAX,
+  EX_BURST_DURATION,
   TRANSFORM_GAUGE_MAX,
 } from '@/constants/balance';
 import { useSaveDataStore } from '@/stores/saveDataStore';
@@ -35,6 +36,9 @@ interface GameSessionState {
 
   // EX
   exGauge: number;
+  isEXBurstActive: boolean;
+  exBurstTimer: number;
+  exBurstTickTimer: number;
 
   // Transform
   primaryForm: MechaFormId;
@@ -59,6 +63,8 @@ interface GameSessionState {
   addScore: (points: number) => void;
   addCredits: (amount: number) => void;
   addExGauge: (amount: number) => void;
+  activateEXBurst: () => void;
+  deactivateEXBurst: () => void;
   addTransformGauge: (amount: number) => void;
   activateTransform: () => void;
   setForm: (formId: MechaFormId) => void;
@@ -89,6 +95,9 @@ const INITIAL_STATE = {
   awakenedTimer: 0,
   awakenedWarning: false,
   exGauge: 0,
+  isEXBurstActive: false,
+  exBurstTimer: 0,
+  exBurstTickTimer: 0,
   primaryForm: 'SD_Standard' as MechaFormId,
   secondaryForm: 'SD_HeavyArtillery' as MechaFormId,
   transformGauge: 0,
@@ -121,6 +130,20 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
 
   addExGauge: (amount) =>
     set((s) => ({ exGauge: Math.min(EX_GAUGE_MAX, s.exGauge + amount) })),
+
+  activateEXBurst: () => {
+    const s = get();
+    if (s.exGauge < EX_GAUGE_MAX || s.isEXBurstActive) return;
+    set({
+      exGauge: 0,
+      isEXBurstActive: true,
+      exBurstTimer: EX_BURST_DURATION,
+      exBurstTickTimer: 0,
+    });
+  },
+
+  deactivateEXBurst: () =>
+    set({ isEXBurstActive: false, exBurstTimer: 0, exBurstTickTimer: 0 }),
 
   addTransformGauge: (amount) =>
     set((s) => ({ transformGauge: Math.min(TRANSFORM_GAUGE_MAX, s.transformGauge + amount) })),

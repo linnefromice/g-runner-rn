@@ -42,6 +42,8 @@ export interface BulletEntity extends BaseEntity {
   damage: number;
   speed: number;
   homing: boolean;
+  specialAbility?: import('./forms').SpecialAbilityType;
+  piercedEnemyIds?: Set<string>;
 }
 
 export interface GateEntity extends BaseEntity {
@@ -61,6 +63,10 @@ export interface BossEntity extends BaseEntity {
   hoverTimer: number;
   hoverDirection: number;
   drones: string[];
+  laserState: 'idle' | 'warning' | 'firing';
+  laserTimer: number;
+  laserX: number;
+  laserTickTimer: number;
 }
 
 export type GameEntity =

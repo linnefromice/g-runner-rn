@@ -66,9 +66,9 @@ describe('upgrades', () => {
       expect(canUnlockForm('SD_HeavyArtillery', [1, 2, 3], 499)).toBe(false);
     });
 
-    test('SD_HighSpeed requires stage 7', () => {
-      expect(canUnlockForm('SD_HighSpeed', [1, 2, 3, 4, 5, 6, 7], 500)).toBe(true);
-      expect(canUnlockForm('SD_HighSpeed', [1, 2, 3, 4, 5, 6], 500)).toBe(false);
+    test('SD_HighSpeed requires stage 5', () => {
+      expect(canUnlockForm('SD_HighSpeed', [1, 2, 3, 4, 5], 500)).toBe(true);
+      expect(canUnlockForm('SD_HighSpeed', [1, 2, 3, 4], 500)).toBe(false);
     });
   });
 

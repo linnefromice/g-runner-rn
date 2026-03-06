@@ -23,6 +23,7 @@ export function createShootingSystem(getForm: () => MechaFormDefinition): GameSy
     const bulletConfig = form.bulletConfig;
     const damage = 10 * form.attackMultiplier;
     const isHoming = form.specialAbility === 'homing_invincible';
+    const specialAbility = form.specialAbility;
     const count = bulletConfig.count;
     const centerX = p.x + p.width / 2;
 
@@ -35,6 +36,7 @@ export function createShootingSystem(getForm: () => MechaFormDefinition): GameSy
         height: bulletConfig.height,
         speed: bulletConfig.speed,
         homing: isHoming,
+        specialAbility,
       });
       Object.assign(slot, bullet);
       slot.active = true;
@@ -51,6 +53,7 @@ export function createShootingSystem(getForm: () => MechaFormDefinition): GameSy
           height: bulletConfig.height,
           speed: bulletConfig.speed,
           homing: isHoming,
+          specialAbility,
         });
         Object.assign(slot, bullet);
         slot.active = true;

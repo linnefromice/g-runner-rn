@@ -23,7 +23,7 @@ export const UPGRADE_CONFIG: Record<string, UpgradeConfig> = {
 export const FORM_UNLOCK_CONDITIONS: Record<MechaFormId, FormUnlockCondition> = {
   SD_Standard:       { type: 'initial' },
   SD_HeavyArtillery: { type: 'unlock', requiredStage: 3, cost: 500 },
-  SD_HighSpeed:      { type: 'unlock', requiredStage: 7, cost: 500 },
+  SD_HighSpeed:      { type: 'unlock', requiredStage: 5, cost: 500 },
   SD_Awakened:       { type: 'combo_only' },
 };
 
