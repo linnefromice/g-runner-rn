@@ -54,6 +54,12 @@ export const BOSS_HOVER_PERIOD = 3000;
 export const BOSS_Y_POSITION = 40;
 export const BOSS_SPREAD_COUNT = 5;
 export const BOSS_DRONE_COUNT = 3;
+export const BOSS_LASER_WARNING_DURATION = 1000;
+export const BOSS_LASER_FIRE_DURATION = 1500;
+export const BOSS_LASER_WIDTH = 30;
+export const BOSS_LASER_DAMAGE = 20;
+export const BOSS_LASER_TICK_INTERVAL = 300;
+export const BOSS_LASER_COOLDOWN = 4000;
 
 /** Movement speeds (logical units/sec) */
 export const PLAYER_BULLET_SPEED = 400;

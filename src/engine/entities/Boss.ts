@@ -21,5 +21,9 @@ export function createBoss(bossIndex: number): BossEntity {
     hoverTimer: 0,
     hoverDirection: 1,
     drones: [],
+    laserState: 'idle',
+    laserTimer: 0,
+    laserX: 0,
+    laserTickTimer: 0,
   };
 }

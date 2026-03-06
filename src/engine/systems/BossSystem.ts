@@ -1,64 +1,128 @@
 import type { GameSystem } from '@/engine/GameLoop';
-import type { GameEntities } from '@/types/entities';
-import { BOSS_HOVER_AMPLITUDE, BOSS_HOVER_PERIOD, BOSS_Y_POSITION, BOSS_SPREAD_COUNT, BOSS_DRONE_COUNT } from '@/constants/balance';
+import type { GameEntities, BossEntity } from '@/types/entities';
+import {
+  BOSS_HOVER_AMPLITUDE,
+  BOSS_HOVER_PERIOD,
+  BOSS_Y_POSITION,
+  BOSS_SPREAD_COUNT,
+  BOSS_DRONE_COUNT,
+  BOSS_LASER_WARNING_DURATION,
+  BOSS_LASER_FIRE_DURATION,
+  BOSS_LASER_WIDTH,
+  BOSS_LASER_DAMAGE,
+  BOSS_LASER_TICK_INTERVAL,
+  BOSS_LASER_COOLDOWN,
+  IFRAME_DURATION,
+} from '@/constants/balance';
 import { LOGICAL_WIDTH } from '@/constants/dimensions';
 import { createEnemyBullet } from '@/engine/entities/Bullet';
 import { createEnemy } from '@/engine/entities/Enemy';
+import { useGameSessionStore } from '@/stores/gameSessionStore';
+
+let laserCooldown = 0;
+let useSpread = true;
 
 export const bossSystem: GameSystem<GameEntities> = (entities, { time }) => {
   const boss = entities.boss;
   if (!boss || !boss.active) return;
 
   const dt = time.delta / 1000;
+  const dtMs = time.delta;
 
   // Slide in from top
   if (boss.y < BOSS_Y_POSITION) {
     boss.y += 30 * dt;
     if (boss.y > BOSS_Y_POSITION) boss.y = BOSS_Y_POSITION;
-    return; // Don't attack while entering
+    return;
   }
 
-  // Hover left-right (§13.2: amplitude 30, period 3s)
+  // Hover left-right
   boss.hoverTimer += time.delta;
   const hoverPhase = (boss.hoverTimer / BOSS_HOVER_PERIOD) * Math.PI * 2;
   const centerX = (LOGICAL_WIDTH - boss.width) / 2;
   boss.x = centerX + Math.sin(hoverPhase) * BOSS_HOVER_AMPLITUDE;
 
-  // Attack patterns
-  boss.attackTimer += dt;
-
-  // Spread shot (HP 100%~): every 2 seconds
-  if (boss.attackTimer >= 2.0) {
-    fireSpreadShot(entities, boss);
-    boss.attackTimer = 0;
+  // Laser state machine (active in phase 'laser' or 'all')
+  if (boss.phase !== 'spread') {
+    updateLaser(entities, boss, dtMs);
   }
 
-  // Laser (HP 50%~): additional attack
-  if (boss.hp / boss.maxHp <= 0.5 && boss.phase !== 'spread') {
-    // Laser is handled as a special timed attack — simplified for Phase 1
-    // TODO: Implement laser warning line + beam visual
+  // Spread attack (only when laser is idle)
+  if (boss.laserState === 'idle') {
+    boss.attackTimer += dt;
+    const shouldSpread = boss.phase === 'spread' || useSpread;
+
+    if (shouldSpread && boss.attackTimer >= 2.0) {
+      fireSpreadShot(entities, boss);
+      boss.attackTimer = 0;
+      if (boss.phase !== 'spread') useSpread = false;
+    }
   }
 
-  // Drone summon (HP 25%~): one-time summon per threshold
+  // Drone summon (HP 25%~)
   if (boss.hp / boss.maxHp <= 0.25 && boss.drones.length === 0) {
     spawnDrones(entities, boss);
   }
 };
 
-function fireSpreadShot(entities: GameEntities, boss: NonNullable<GameEntities['boss']>) {
-  const centerX = boss.x + boss.width / 2;
-  const startY = boss.y + boss.height;
+function updateLaser(entities: GameEntities, boss: BossEntity, dtMs: number) {
+  switch (boss.laserState) {
+    case 'idle': {
+      laserCooldown += dtMs;
+      if (laserCooldown >= BOSS_LASER_COOLDOWN && !useSpread) {
+        boss.laserState = 'warning';
+        boss.laserTimer = BOSS_LASER_WARNING_DURATION;
+        boss.laserX = boss.x + boss.width / 2;
+        boss.laserTickTimer = 0;
+        laserCooldown = 0;
+        useSpread = true;
+      }
+      break;
+    }
+    case 'warning': {
+      boss.laserTimer -= dtMs;
+      if (boss.laserTimer <= 0) {
+        boss.laserState = 'firing';
+        boss.laserTimer = BOSS_LASER_FIRE_DURATION;
+        boss.laserTickTimer = 0;
+      }
+      break;
+    }
+    case 'firing': {
+      boss.laserTimer -= dtMs;
+      boss.laserTickTimer += dtMs;
 
+      if (boss.laserTickTimer >= BOSS_LASER_TICK_INTERVAL) {
+        boss.laserTickTimer -= BOSS_LASER_TICK_INTERVAL;
+        const player = entities.player;
+        if (player.active && !player.isInvincible) {
+          const playerCenterX = player.x + player.width / 2;
+          if (Math.abs(playerCenterX - boss.laserX) <= BOSS_LASER_WIDTH / 2) {
+            const store = useGameSessionStore.getState();
+            store.takeDamage(BOSS_LASER_DAMAGE);
+            player.isInvincible = true;
+            player.invincibleTimer = IFRAME_DURATION;
+            store.resetCombo();
+          }
+        }
+      }
+
+      if (boss.laserTimer <= 0) {
+        boss.laserState = 'idle';
+      }
+      break;
+    }
+  }
+}
+
+function fireSpreadShot(entities: GameEntities, boss: NonNullable<GameEntities['boss']>) {
+  const bCenterX = boss.x + boss.width / 2;
+  const startY = boss.y + boss.height;
   for (let i = 0; i < BOSS_SPREAD_COUNT; i++) {
     const slot = entities.enemyBullets.find((b) => !b.active);
     if (!slot) break;
-
     const angle = ((i - Math.floor(BOSS_SPREAD_COUNT / 2)) * 15 * Math.PI) / 180;
-    const bullet = createEnemyBullet(
-      centerX + Math.sin(angle) * 20,
-      startY,
-      15 // §6.2 boss spread damage
-    );
+    const bullet = createEnemyBullet(bCenterX + Math.sin(angle) * 20, startY, 15);
     Object.assign(slot, bullet);
     slot.active = true;
   }
@@ -68,7 +132,6 @@ function spawnDrones(entities: GameEntities, boss: NonNullable<GameEntities['bos
   for (let i = 0; i < BOSS_DRONE_COUNT; i++) {
     const slot = entities.enemies.find((e) => !e.active);
     if (!slot) break;
-
     const x = boss.x + (i + 1) * (boss.width / (BOSS_DRONE_COUNT + 1));
     const drone = createEnemy('stationary', x, boss.y + boss.height + 20, 0.5);
     Object.assign(slot, drone);

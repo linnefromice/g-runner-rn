@@ -63,6 +63,10 @@ export interface BossEntity extends BaseEntity {
   hoverTimer: number;
   hoverDirection: number;
   drones: string[];
+  laserState: 'idle' | 'warning' | 'firing';
+  laserTimer: number;
+  laserX: number;
+  laserTickTimer: number;
 }
 
 export type GameEntity =
