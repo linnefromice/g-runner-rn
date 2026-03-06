@@ -176,6 +176,7 @@ Systems bridge game→UI: e.g., `CollisionSystem` calls `gameSessionStore.getSta
 | `component-reuse.md`      | コンポーネント・モジュール共通化ルール     |
 | `pipeline-manifest.md`    | パイプラインマニフェスト仕様               |
 | `reanimated-safety.md`    | Reanimated + RNGH ワークレット安全パターン |
+| `recommended-skills.md`   | 推奨スキル・プラグイン活用ルール           |
 
 ### Agents (`.claude/agents/`)
 
