@@ -66,3 +66,6 @@ export const TRANSFORM_GAUGE_MAX = 100;
 export const TRANSFORM_GAIN_ENEMY_KILL = 8;
 export const TRANSFORM_GAIN_GATE_PASS = 12;
 export const TRANSFORM_GAIN_PER_SECOND = 2;
+
+/** Explosion bullet */
+export const EXPLOSION_RADIUS = 40;

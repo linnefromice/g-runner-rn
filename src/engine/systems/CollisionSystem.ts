@@ -3,7 +3,7 @@ import type { GameEntities } from '@/types/entities';
 import { checkAABBOverlap, getPlayerHitbox } from '@/engine/collision';
 import { deactivateEnemy } from '@/engine/entities/Enemy';
 import { deactivateBullet } from '@/engine/entities/Bullet';
-import { IFRAME_DURATION, TRANSFORM_GAIN_ENEMY_KILL } from '@/constants/balance';
+import { IFRAME_DURATION, TRANSFORM_GAIN_ENEMY_KILL, EXPLOSION_RADIUS } from '@/constants/balance';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
 import { getEnemyScore, getEnemyCredits } from '@/game/scoring';
 
@@ -19,9 +19,41 @@ export const collisionSystem: GameSystem<GameEntities> = (entities) => {
     if (!bullet.active) continue;
     for (const enemy of entities.enemies) {
       if (!enemy.active) continue;
+      // Pierce: skip enemies already hit by this bullet
+      if (bullet.specialAbility === 'pierce' && bullet.piercedEnemyIds?.has(enemy.id)) continue;
       if (checkAABBOverlap(bullet, enemy)) {
         enemy.hp -= bullet.damage;
-        deactivateBullet(bullet);
+
+        if (bullet.specialAbility === 'pierce') {
+          // Pierce: don't deactivate, record hit
+          bullet.piercedEnemyIds?.add(enemy.id);
+        } else if (bullet.specialAbility === 'explosion_radius') {
+          // Explosion: deactivate bullet, area damage
+          deactivateBullet(bullet);
+          const impactX = bullet.x + bullet.width / 2;
+          const impactY = bullet.y + bullet.height / 2;
+          for (const other of entities.enemies) {
+            if (!other.active || other.id === enemy.id) continue;
+            const otherCX = other.x + other.width / 2;
+            const otherCY = other.y + other.height / 2;
+            const dist = Math.sqrt((impactX - otherCX) ** 2 + (impactY - otherCY) ** 2);
+            if (dist <= EXPLOSION_RADIUS) {
+              other.hp -= bullet.damage;
+              if (other.hp <= 0) {
+                deactivateEnemy(other);
+                store.addScore(getEnemyScore(other.enemyType));
+                store.addCredits(getEnemyCredits());
+                store.addExGauge(5);
+                store.addTransformGauge(TRANSFORM_GAIN_ENEMY_KILL);
+              }
+            }
+          }
+        } else {
+          // Normal: deactivate bullet
+          deactivateBullet(bullet);
+        }
+
+        // Kill check for the directly-hit enemy
         if (enemy.hp <= 0) {
           deactivateEnemy(enemy);
           store.addScore(getEnemyScore(enemy.enemyType));
@@ -29,7 +61,9 @@ export const collisionSystem: GameSystem<GameEntities> = (entities) => {
           store.addExGauge(5);
           store.addTransformGauge(TRANSFORM_GAIN_ENEMY_KILL);
         }
-        break;
+
+        // Pierce continues to next enemy; others break
+        if (bullet.specialAbility !== 'pierce') break;
       }
     }
   }
@@ -42,16 +76,39 @@ export const collisionSystem: GameSystem<GameEntities> = (entities) => {
         const prevPercent = Math.floor((entities.boss.hp / entities.boss.maxHp) * 100);
         entities.boss.hp -= bullet.damage;
         const newPercent = Math.floor((entities.boss.hp / entities.boss.maxHp) * 100);
-        deactivateBullet(bullet);
 
-        // Score per percent of boss HP
+        if (bullet.specialAbility === 'pierce') {
+          // Don't deactivate pierce bullets on boss
+        } else if (bullet.specialAbility === 'explosion_radius') {
+          deactivateBullet(bullet);
+          // Also damage nearby enemies
+          const impactX = bullet.x + bullet.width / 2;
+          const impactY = bullet.y + bullet.height / 2;
+          for (const enemy of entities.enemies) {
+            if (!enemy.active) continue;
+            const ecx = enemy.x + enemy.width / 2;
+            const ecy = enemy.y + enemy.height / 2;
+            if (Math.sqrt((impactX - ecx) ** 2 + (impactY - ecy) ** 2) <= EXPLOSION_RADIUS) {
+              enemy.hp -= bullet.damage;
+              if (enemy.hp <= 0) {
+                deactivateEnemy(enemy);
+                store.addScore(getEnemyScore(enemy.enemyType));
+                store.addCredits(getEnemyCredits());
+                store.addExGauge(5);
+                store.addTransformGauge(TRANSFORM_GAIN_ENEMY_KILL);
+              }
+            }
+          }
+        } else {
+          deactivateBullet(bullet);
+        }
+
         const percentDamaged = prevPercent - newPercent;
         if (percentDamaged > 0) {
           store.addScore(percentDamaged * 50);
         }
         store.addExGauge(2);
 
-        // Update boss phase
         const hpRatio = entities.boss.hp / entities.boss.maxHp;
         if (hpRatio <= 0.25) entities.boss.phase = 'all';
         else if (hpRatio <= 0.5) entities.boss.phase = 'laser';
