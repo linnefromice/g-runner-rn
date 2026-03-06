@@ -1,4 +1,5 @@
 import type { BulletEntity } from '@/types/entities';
+import type { SpecialAbilityType } from '@/types/forms';
 import { HITBOX } from '@/constants/dimensions';
 import { PLAYER_BULLET_SPEED, ENEMY_BULLET_SPEED } from '@/constants/balance';
 
@@ -8,8 +9,9 @@ export function createPlayerBullet(
   x: number,
   y: number,
   damage: number,
-  config?: { width?: number; height?: number; speed?: number; homing?: boolean }
+  config?: { width?: number; height?: number; speed?: number; homing?: boolean; specialAbility?: SpecialAbilityType }
 ): BulletEntity {
+  const ability = config?.specialAbility ?? 'none';
   return {
     id: `pb_${nextId++}`,
     type: 'playerBullet',
@@ -21,6 +23,8 @@ export function createPlayerBullet(
     damage,
     speed: config?.speed ?? PLAYER_BULLET_SPEED,
     homing: config?.homing ?? false,
+    specialAbility: ability,
+    ...(ability === 'pierce' ? { piercedEnemyIds: new Set<string>() } : {}),
   };
 }
 
