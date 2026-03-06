@@ -19,63 +19,75 @@ import { createEnemyBullet } from '@/engine/entities/Bullet';
 import { createEnemy } from '@/engine/entities/Enemy';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
 
-let laserCooldown = 0;
-let useSpread = true;
+export function createBossSystem(): GameSystem<GameEntities> {
+  let laserCooldown = 0;
+  let useSpread = true;
 
-export const bossSystem: GameSystem<GameEntities> = (entities, { time }) => {
-  const boss = entities.boss;
-  if (!boss || !boss.active) return;
+  return (entities, { time }) => {
+    const boss = entities.boss;
+    if (!boss || !boss.active) return;
 
-  const dt = time.delta / 1000;
-  const dtMs = time.delta;
+    const dt = time.delta / 1000;
+    const dtMs = time.delta;
 
-  // Slide in from top
-  if (boss.y < BOSS_Y_POSITION) {
-    boss.y += 30 * dt;
-    if (boss.y > BOSS_Y_POSITION) boss.y = BOSS_Y_POSITION;
-    return;
-  }
-
-  // Hover left-right
-  boss.hoverTimer += time.delta;
-  const hoverPhase = (boss.hoverTimer / BOSS_HOVER_PERIOD) * Math.PI * 2;
-  const centerX = (LOGICAL_WIDTH - boss.width) / 2;
-  boss.x = centerX + Math.sin(hoverPhase) * BOSS_HOVER_AMPLITUDE;
-
-  // Laser state machine (active in phase 'laser' or 'all')
-  if (boss.phase !== 'spread') {
-    updateLaser(entities, boss, dtMs);
-  }
-
-  // Spread attack (only when laser is idle)
-  if (boss.laserState === 'idle') {
-    boss.attackTimer += dt;
-    const shouldSpread = boss.phase === 'spread' || useSpread;
-
-    if (shouldSpread && boss.attackTimer >= 2.0) {
-      fireSpreadShot(entities, boss);
-      boss.attackTimer = 0;
-      if (boss.phase !== 'spread') useSpread = false;
+    // Slide in from top
+    if (boss.y < BOSS_Y_POSITION) {
+      boss.y += 30 * dt;
+      if (boss.y > BOSS_Y_POSITION) boss.y = BOSS_Y_POSITION;
+      return;
     }
-  }
 
-  // Drone summon (HP 25%~)
-  if (boss.hp / boss.maxHp <= 0.25 && boss.drones.length === 0) {
-    spawnDrones(entities, boss);
-  }
-};
+    // Hover left-right
+    boss.hoverTimer += time.delta;
+    const hoverPhase = (boss.hoverTimer / BOSS_HOVER_PERIOD) * Math.PI * 2;
+    const centerX = (LOGICAL_WIDTH - boss.width) / 2;
+    boss.x = centerX + Math.sin(hoverPhase) * BOSS_HOVER_AMPLITUDE;
 
-function updateLaser(entities: GameEntities, boss: BossEntity, dtMs: number) {
+    // Laser state machine (active in phase 'laser' or 'all')
+    if (boss.phase !== 'spread') {
+      updateLaser(entities, boss, dtMs, laserCooldown, useSpread, (v) => { laserCooldown = v; }, (v) => { useSpread = v; });
+    }
+
+    // Spread attack (only when laser is idle)
+    if (boss.laserState === 'idle') {
+      boss.attackTimer += dt;
+      const shouldSpread = boss.phase === 'spread' || useSpread;
+
+      if (shouldSpread && boss.attackTimer >= 2.0) {
+        fireSpreadShot(entities, boss);
+        boss.attackTimer = 0;
+        if (boss.phase !== 'spread') useSpread = false;
+      }
+    }
+
+    // Drone summon (HP 25%~)
+    if (boss.hp / boss.maxHp <= 0.25 && boss.drones.length === 0) {
+      spawnDrones(entities, boss);
+    }
+  };
+}
+
+function updateLaser(
+  entities: GameEntities,
+  boss: BossEntity,
+  dtMs: number,
+  laserCooldown: number,
+  useSpread: boolean,
+  setLaserCooldown: (v: number) => void,
+  setUseSpread: (v: boolean) => void,
+) {
   switch (boss.laserState) {
     case 'idle': {
-      laserCooldown += dtMs;
-      if (laserCooldown >= BOSS_LASER_COOLDOWN && !useSpread) {
+      const newCooldown = laserCooldown + dtMs;
+      if (newCooldown >= BOSS_LASER_COOLDOWN && !useSpread) {
         boss.laserState = 'warning';
         boss.laserTimer = BOSS_LASER_WARNING_DURATION;
         boss.laserX = boss.x + boss.width / 2;
         boss.laserTickTimer = 0;
-        laserCooldown = 0;
-        useSpread = true;
+        setLaserCooldown(0);
+        setUseSpread(true);
+      } else {
+        setLaserCooldown(newCooldown);
       }
       break;
     }

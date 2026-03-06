@@ -1,10 +1,10 @@
 import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
-import { EX_BURST_WIDTH, EX_BURST_DAMAGE, EX_BURST_TICK_INTERVAL, TRANSFORM_GAIN_ENEMY_KILL } from '@/constants/balance';
+import { EX_BURST_WIDTH, EX_BURST_DAMAGE, EX_BURST_TICK_INTERVAL } from '@/constants/balance';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
-import { deactivateEnemy } from '@/engine/entities/Enemy';
 import { deactivateBullet } from '@/engine/entities/Bullet';
-import { getEnemyScore, getEnemyCredits } from '@/game/scoring';
+import { updateBossPhase } from '@/engine/systems/bossPhase';
+import { applyEnemyKillReward } from '@/engine/systems/enemyKillReward';
 
 export const exBurstSystem: GameSystem<GameEntities> = (entities, { time }) => {
   const store = useGameSessionStore.getState();
@@ -40,13 +40,7 @@ export const exBurstSystem: GameSystem<GameEntities> = (entities, { time }) => {
     const ecy = enemy.y + enemy.height / 2;
     if (ecx >= beamLeft && ecx <= beamRight && ecy <= beamBottom) {
       enemy.hp -= EX_BURST_DAMAGE;
-      if (enemy.hp <= 0) {
-        deactivateEnemy(enemy);
-        store.addScore(getEnemyScore(enemy.enemyType));
-        store.addCredits(getEnemyCredits());
-        store.addExGauge(5);
-        store.addTransformGauge(TRANSFORM_GAIN_ENEMY_KILL);
-      }
+      if (enemy.hp <= 0) applyEnemyKillReward(enemy);
     }
   }
 
@@ -56,7 +50,7 @@ export const exBurstSystem: GameSystem<GameEntities> = (entities, { time }) => {
     const bcy = entities.boss.y + entities.boss.height / 2;
     if (bcx >= beamLeft && bcx <= beamRight && bcy <= beamBottom) {
       entities.boss.hp -= EX_BURST_DAMAGE;
-      store.addExGauge(2);
+      updateBossPhase(entities.boss);
       if (entities.boss.hp <= 0) {
         entities.boss.active = false;
         store.setStageClear(true);

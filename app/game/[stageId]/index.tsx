@@ -27,7 +27,7 @@ import { iframeSystem } from '@/engine/systems/IFrameSystem';
 import { transformGaugeSystem } from '@/engine/systems/TransformGaugeSystem';
 import { awakenedSystem } from '@/engine/systems/AwakenedSystem';
 import { exBurstSystem } from '@/engine/systems/EXBurstSystem';
-import { bossSystem } from '@/engine/systems/BossSystem';
+import { createBossSystem } from '@/engine/systems/BossSystem';
 import { gameOverSystem } from '@/engine/systems/GameOverSystem';
 import { createSyncRenderSystem } from '@/engine/systems/SyncRenderSystem';
 
@@ -94,7 +94,7 @@ export default function GameScreen() {
     collisionSystem,
     gateSystem,
     iframeSystem,
-    bossSystem,
+    createBossSystem(),
     gameOverSystem,
     createSyncRenderSystem(renderData),
   ]);

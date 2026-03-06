@@ -6,6 +6,6 @@ export { createSpawnSystem } from './SpawnSystem';
 export { collisionSystem } from './CollisionSystem';
 export { gateSystem } from './GateSystem';
 export { iframeSystem } from './IFrameSystem';
-export { bossSystem } from './BossSystem';
+export { createBossSystem } from './BossSystem';
 export { gameOverSystem } from './GameOverSystem';
 export { createSyncRenderSystem } from './SyncRenderSystem';
