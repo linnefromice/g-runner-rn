@@ -75,7 +75,7 @@ interface GameSessionState {
   activateEXBurst: () => void;
   deactivateEXBurst: () => void;
   addTransformGauge: (amount: number) => void;
-  activateTransform: () => void;
+  activateTransform: () => boolean;
   setForm: (formId: MechaFormId) => void;
   addStat: (stat: StatKey, value: number) => void;
   multiplyStat: (stat: StatKey, value: number) => void;
@@ -170,8 +170,8 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
 
   activateTransform: () => {
     const s = get();
-    if (s.transformGauge < TRANSFORM_GAUGE_MAX) return;
-    if (s.isAwakened) return;
+    if (s.transformGauge < TRANSFORM_GAUGE_MAX) return false;
+    if (s.isAwakened) return false;
     const nextForm = s.currentForm === s.secondaryForm
       ? s.primaryForm
       : s.secondaryForm;
@@ -180,6 +180,7 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
       previousForm: s.currentForm,
       transformGauge: 0,
     });
+    return true;
   },
 
   setForm: (formId) =>

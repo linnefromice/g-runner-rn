@@ -12,7 +12,7 @@ import { getStage } from '@/game/stages';
 import { getFormDefinition } from '@/game/forms';
 import { createGameEntities } from '@/engine/createGameEntities';
 import { getScreenMetrics } from '@/constants/dimensions';
-import { TRANSFORM_GAUGE_MAX, JUST_TF_WINDOW } from '@/constants/balance';
+import { JUST_TF_WINDOW } from '@/constants/balance';
 import type { GameEntities } from '@/types/entities';
 import type { MechaFormId } from '@/types/forms';
 
@@ -180,10 +180,10 @@ export default function GameScreen() {
   }, []);
 
   const handleTransform = useCallback(() => {
-    const store = useGameSessionStore.getState();
-    if (store.transformGauge < TRANSFORM_GAUGE_MAX || store.isAwakened) return;
-    store.activateTransform();
-    entitiesRef.current.justTFTimer = JUST_TF_WINDOW;
+    const activated = useGameSessionStore.getState().activateTransform();
+    if (activated) {
+      entitiesRef.current.justTFTimer = JUST_TF_WINDOW;
+    }
   }, []);
 
   return (
