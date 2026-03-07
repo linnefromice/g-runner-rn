@@ -1,8 +1,8 @@
-export type EnemyType = 'stationary' | 'patrol' | 'rush';
+export type EnemyType = 'stationary' | 'patrol' | 'rush' | 'swarm' | 'phalanx' | 'juggernaut';
 export type BossAttackPattern = 'spread_shot' | 'laser_beam' | 'drone_summon';
 
 export interface MovePattern {
-  type: 'static' | 'horizontal_patrol' | 'rush_down';
+  type: 'static' | 'horizontal_patrol' | 'rush_down' | 'sine_wave' | 'slow_descent';
   amplitude?: number;
   speed?: number;
 }
