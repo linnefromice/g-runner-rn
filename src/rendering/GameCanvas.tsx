@@ -126,11 +126,12 @@ function EntitySlot({
     type.value === 'shockwave' ? (renderData.value[index]?.opacity ?? 0) : 0
   );
 
-  // Rect fallback opacity — only visible when pathStr is empty (gate, boostLane)
+  // Rect fallback opacity — only visible for rect-based types (gate, boostLane)
   const rectOpacity = useDerivedValue(() => {
     const e = renderData.value[index];
     if (!e) return 0;
-    return getEntityPath(e.type, 0, 0, 1, 1) === null ? (e.opacity ?? 0) : 0;
+    const t = e.type;
+    return (t === 'gate' || t === 'boostLane') ? (e.opacity ?? 0) : 0;
   });
 
   // Gate label
