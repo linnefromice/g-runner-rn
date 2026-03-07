@@ -89,6 +89,48 @@ export const GATE_REFIT_SPEED: GateDefinition = {
   effects: [{ kind: 'refit', targetForm: 'SD_HighSpeed' }],
 };
 
+// === New Enhance gates ===
+
+export const GATE_ATK_UP_15: GateDefinition = {
+  type: 'enhance',
+  displayLabel: 'ATK +15',
+  effects: [{ kind: 'stat_add', stat: 'atk', value: 15 }],
+};
+
+export const GATE_FR_UP_30: GateDefinition = {
+  type: 'enhance',
+  displayLabel: 'FR +30%',
+  effects: [{ kind: 'stat_multiply', stat: 'fireRate', value: 1.3 }],
+};
+
+// === New Recovery gates ===
+
+export const GATE_HEAL_FULL: GateDefinition = {
+  type: 'recovery',
+  displayLabel: 'HP 100%',
+  effects: [{ kind: 'heal_percent', value: 100 }],
+};
+
+// === New Tradeoff gates ===
+
+export const GATE_RAPID_GLASS: GateDefinition = {
+  type: 'tradeoff',
+  displayLabel: 'FR×2 HP-30',
+  effects: [
+    { kind: 'stat_multiply', stat: 'fireRate', value: 2.0 },
+    { kind: 'heal', value: -30 },
+  ],
+};
+
+export const GATE_TANK: GateDefinition = {
+  type: 'tradeoff',
+  displayLabel: 'HP+50 SPD↓',
+  effects: [
+    { kind: 'stat_add', stat: 'hp', value: 50 },
+    { kind: 'stat_multiply', stat: 'speed', value: 0.7 },
+  ],
+};
+
 // === Gate pair configs ===
 
 export const PAIR_ATK_SPD: GatePairConfig = {
@@ -113,4 +155,28 @@ export const PAIR_TRADEOFF_OPTIONAL: GatePairConfig = {
   layout: 'optional',
   left: GATE_GLASS_CANNON,
   right: GATE_SPEED_DEMON,
+};
+
+export const PAIR_ENHANCE_STRONG: GatePairConfig = {
+  layout: 'forced',
+  left: GATE_ATK_UP_15,
+  right: GATE_FR_UP_30,
+};
+
+export const PAIR_RECOVERY_FULL: GatePairConfig = {
+  layout: 'forced',
+  left: GATE_HEAL_FULL,
+  right: GATE_ATK_UP,
+};
+
+export const PAIR_TRADEOFF_EXTREME: GatePairConfig = {
+  layout: 'optional',
+  left: GATE_RAPID_GLASS,
+  right: GATE_TANK,
+};
+
+export const PAIR_ATK_FR: GatePairConfig = {
+  layout: 'forced',
+  left: GATE_ATK_UP_10,
+  right: GATE_FR_UP,
 };
