@@ -16,6 +16,9 @@ export const ENEMY_STATS = {
   stationary: { hp: 20, attackDamage: 10, attackInterval: 2.0, scoreValue: 100, creditValue: 1 },
   patrol:     { hp: 40, attackDamage: 10, attackInterval: 1.5, scoreValue: 200, creditValue: 2 },
   rush:       { hp: 15, attackDamage: 15, attackInterval: 0,   scoreValue: 100, creditValue: 1 },
+  swarm:      { hp: 1,  attackDamage: 5,  attackInterval: 0,   scoreValue: 30,  creditValue: 0 },
+  phalanx:    { hp: 60, attackDamage: 15, attackInterval: 2.0, scoreValue: 300, creditValue: 4 },
+  juggernaut: { hp: 120, attackDamage: 25, attackInterval: 1.5, scoreValue: 500, creditValue: 7 },
 } as const;
 
 /** Scoring (§12.1) */
@@ -58,6 +61,7 @@ export const BOSS_HOVER_PERIOD = 3000;
 export const BOSS_Y_POSITION = 40;
 export const BOSS_SPREAD_COUNT = 5;
 export const BOSS_DRONE_COUNT = 3;
+export const BOSS_DRONE_COUNTS: Record<number, number> = { 1: 3, 2: 4 };
 export const BOSS_LASER_WARNING_DURATION = 1000;
 export const BOSS_LASER_FIRE_DURATION = 1500;
 export const BOSS_LASER_WIDTH = 30;

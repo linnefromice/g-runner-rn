@@ -14,6 +14,9 @@ export const HITBOX = {
   playerVisual: { width: 32, height: 40 },
   playerBullet: { width: 4,  height: 12 },
   enemy:        { width: 28, height: 28 },
+  swarm:        { width: 16, height: 16 },
+  phalanx:      { width: 36, height: 36 },
+  juggernaut:   { width: 56, height: 48 },
   enemyBullet:  { width: 6,  height: 6  },
   gate:         { width: 140, height: 24 },
   boss:         { width: 200, height: 120 },
@@ -24,7 +27,7 @@ export const GATE_FORCED_GAP = 40;
 export const GATE_OPTIONAL_WIDTH = 100;
 
 /** Object pool limits */
-export const MAX_ENEMIES = 20;
+export const MAX_ENEMIES = 40;
 export const MAX_PLAYER_BULLETS = 30;
 export const MAX_ENEMY_BULLETS = 50;
 export const MAX_GATES = 4;
