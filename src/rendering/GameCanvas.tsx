@@ -23,7 +23,7 @@ type GameCanvasProps = {
   scale: number;
 };
 
-const MAX_VISIBLE_ENTITIES = 256;
+const MAX_VISIBLE_ENTITIES = 128;
 
 const MAX_SCORE_POPUPS = 16;
 
