@@ -15,6 +15,7 @@ import { getScreenMetrics } from '@/constants/dimensions';
 import { JUST_TF_WINDOW } from '@/constants/balance';
 import type { GameEntities } from '@/types/entities';
 import type { MechaFormId } from '@/types/forms';
+import { onEXBurst } from '@/engine/effects';
 
 // Systems
 import { scrollSystem } from '@/engine/systems/ScrollSystem';
@@ -177,6 +178,8 @@ export default function GameScreen() {
 
   const handleEXBurst = useCallback(() => {
     useGameSessionStore.getState().activateEXBurst();
+    const p = entitiesRef.current.player;
+    onEXBurst(entitiesRef.current, p.x + p.width / 2, p.y);
   }, []);
 
   const handleTransform = useCallback(() => {
