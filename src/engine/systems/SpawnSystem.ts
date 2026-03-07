@@ -4,6 +4,7 @@ import type { StageDefinition } from '@/types/stages';
 import { createEnemy } from '@/engine/entities/Enemy';
 import { createGatePair } from '@/engine/entities/Gate';
 import { createBoss } from '@/engine/entities/Boss';
+import { useGameSessionStore } from '@/stores/gameSessionStore';
 
 export function createSpawnSystem(stage: StageDefinition): GameSystem<GameEntities> {
   return (entities) => {
@@ -20,6 +21,7 @@ export function createSpawnSystem(stage: StageDefinition): GameSystem<GameEntiti
       switch (event.type) {
         case 'enemy_spawn': {
           const count = event.count ?? 1;
+          let spawned = 0;
           for (let i = 0; i < count; i++) {
             const slot = entities.enemies.find((e) => !e.active);
             if (!slot) break;
@@ -31,6 +33,10 @@ export function createSpawnSystem(stage: StageDefinition): GameSystem<GameEntiti
             );
             Object.assign(slot, enemy);
             slot.active = true;
+            spawned++;
+          }
+          if (spawned > 0) {
+            useGameSessionStore.getState().incrementEnemiesSpawned(spawned);
           }
           break;
         }
