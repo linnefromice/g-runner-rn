@@ -13,7 +13,9 @@ export type StageEvent =
   | { time: number; type: 'enemy_spawn'; enemyType: EnemyType; x: number; count?: number }
   | { time: number; type: 'gate_spawn'; gateConfig: GatePairConfig }
   | { time: number; type: 'boss_spawn'; bossId: string }
-  | { time: number; type: 'debris_spawn'; x: number; count?: number };
+  | { time: number; type: 'debris_spawn'; x: number; count?: number }
+  | { time: number; type: 'boost_lane_start'; x: number; width: number }
+  | { time: number; type: 'boost_lane_end' };
 
 export interface StageDefinition {
   id: number;

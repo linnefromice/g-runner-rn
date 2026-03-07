@@ -113,6 +113,10 @@ export interface GameEntities {
   timelineIndex: number;
   /** Is the game in boss phase? */
   isBossPhase: boolean;
+  /** Boost lane zone (null when no lane active) */
+  boostLane: { x: number; width: number; active: boolean } | null;
+  /** Whether the player is currently inside the boost lane */
+  isPlayerBoosted: boolean;
   /** Background scroll offset */
   scrollY: number;
   /** Screen dimensions for boundary checks */

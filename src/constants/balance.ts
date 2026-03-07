@@ -101,3 +101,7 @@ export const GROWTH_GATE_PER_HIT = 1;
 
 /** Roulette Gate */
 export const ROULETTE_INTERVAL = 500;
+
+/** Boost Lane */
+export const BOOST_LANE_SCORE_MULTIPLIER = 1.5;
+export const BOOST_LANE_SCROLL_MULTIPLIER = 1.3;

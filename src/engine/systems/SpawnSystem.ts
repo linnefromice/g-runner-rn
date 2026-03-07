@@ -66,6 +66,14 @@ export function createSpawnSystem(stage: StageDefinition): GameSystem<GameEntiti
           }
           break;
         }
+        case 'boost_lane_start':
+          entities.boostLane = { x: event.x, width: event.width, active: true };
+          break;
+        case 'boost_lane_end':
+          if (entities.boostLane) {
+            entities.boostLane.active = false;
+          }
+          break;
         case 'boss_spawn': {
           const bossIndex = Math.ceil(stage.id / 5);
           entities.boss = createBoss(bossIndex);

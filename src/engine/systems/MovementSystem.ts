@@ -7,7 +7,7 @@ import {
   PLAYER_Y_TOP_RATIO,
   PLAYER_Y_BOTTOM_MARGIN,
 } from '@/constants/dimensions';
-import { PLAYER_MOVE_SPEED, BASE_SCROLL_SPEED } from '@/constants/balance';
+import { PLAYER_MOVE_SPEED, BASE_SCROLL_SPEED, BOOST_LANE_SCROLL_MULTIPLIER } from '@/constants/balance';
 import { deactivateBullet } from '@/engine/entities/Bullet';
 import { deactivateEnemy } from '@/engine/entities/Enemy';
 import { deactivateDebris } from '@/engine/entities/Debris';
@@ -22,6 +22,7 @@ export function createMovementSystem(
   const dt = time.delta / 1000;
   const { visibleHeight } = entities.screen;
   const form = getForm();
+  const scrollSpeed = BASE_SCROLL_SPEED * (entities.isPlayerBoosted ? BOOST_LANE_SCROLL_MULTIPLIER : 1) * dt;
 
   // Smooth slide toward tap target (if set)
   const p = entities.player;
@@ -72,7 +73,7 @@ export function createMovementSystem(
   // Move enemies (scroll down + deactivate off-screen)
   for (const e of entities.enemies) {
     if (!e.active) continue;
-    e.y += BASE_SCROLL_SPEED * dt;
+    e.y += scrollSpeed;
     if (e.y > visibleHeight + 50) {
       deactivateEnemy(e);
     }
@@ -81,7 +82,7 @@ export function createMovementSystem(
   // Move gates downward
   for (const g of entities.gates) {
     if (!g.active) continue;
-    g.y += BASE_SCROLL_SPEED * dt;
+    g.y += scrollSpeed;
     if (g.y > visibleHeight + 50) {
       g.active = false;
     }
@@ -90,7 +91,7 @@ export function createMovementSystem(
   // Move debris downward
   for (const d of entities.debris) {
     if (!d.active) continue;
-    d.y += BASE_SCROLL_SPEED * dt;
+    d.y += scrollSpeed;
     if (d.y > visibleHeight + 50) {
       deactivateDebris(d);
     }

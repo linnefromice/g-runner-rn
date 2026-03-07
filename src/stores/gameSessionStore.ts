@@ -47,6 +47,7 @@ interface GameSessionState {
 
   // Score / Credits
   score: number;
+  scoreMultiplier: number;
   credits: number;
 
   // Bonus tracking
@@ -68,6 +69,7 @@ interface GameSessionState {
   heal: (amount: number) => void;
   healPercent: (percent: number) => void;
   addScore: (points: number) => void;
+  setScoreMultiplier: (v: number) => void;
   addCredits: (amount: number) => void;
   addExGauge: (amount: number) => void;
   activateEXBurst: () => void;
@@ -112,6 +114,7 @@ const INITIAL_STATE = {
   secondaryForm: 'SD_HeavyArtillery' as MechaFormId,
   transformGauge: 0,
   score: 0,
+  scoreMultiplier: 1,
   credits: 0,
   damageTaken: 0,
   awakenedCount: 0,
@@ -139,7 +142,9 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
   healPercent: (percent) =>
     set((s) => ({ hp: Math.min(s.maxHp, s.hp + Math.round(s.maxHp * percent / 100)) })),
 
-  addScore: (points) => set((s) => ({ score: s.score + points })),
+  addScore: (points) => set((s) => ({ score: s.score + Math.round(points * s.scoreMultiplier) })),
+
+  setScoreMultiplier: (v) => set({ scoreMultiplier: v }),
 
   addCredits: (amount) => set((s) => ({ credits: s.credits + amount })),
 

@@ -65,6 +65,8 @@ export function createGameEntities(
     gates: Array.from({ length: MAX_GATES }, createInactiveGate),
     debris: Array.from({ length: MAX_DEBRIS }, createInactiveDebris),
     boss: null,
+    boostLane: null,
+    isPlayerBoosted: false,
     stageTime: 0,
     stageDuration: 0,
     isBossStage: false,

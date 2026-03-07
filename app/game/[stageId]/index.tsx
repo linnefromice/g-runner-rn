@@ -17,6 +17,7 @@ import type { MechaFormId } from '@/types/forms';
 
 // Systems
 import { scrollSystem } from '@/engine/systems/ScrollSystem';
+import { boostLaneSystem } from '@/engine/systems/BoostLaneSystem';
 import { createMovementSystem } from '@/engine/systems/MovementSystem';
 import { createShootingSystem } from '@/engine/systems/ShootingSystem';
 import { enemyAISystem } from '@/engine/systems/EnemyAISystem';
@@ -84,6 +85,7 @@ export default function GameScreen() {
 
   const systemsRef = useRef<GameSystem<GameEntities>[]>([
     scrollSystem,
+    boostLaneSystem,
     createMovementSystem(getForm),
     createShootingSystem(getForm),
     enemyAISystem,

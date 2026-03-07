@@ -22,6 +22,19 @@ export function createSyncRenderSystem(
   return (entities) => {
     const out: RenderEntity[] = [];
 
+    // Boost Lane (background overlay)
+    if (entities.boostLane?.active) {
+      out.push({
+        type: 'boostLane',
+        x: entities.boostLane.x,
+        y: 0,
+        width: entities.boostLane.width,
+        height: entities.screen.visibleHeight,
+        color: '#FFD60033',
+        opacity: 1.0,
+      });
+    }
+
     // Player
     const p = entities.player;
     if (p.active) {
