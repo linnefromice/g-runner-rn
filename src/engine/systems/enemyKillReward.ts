@@ -12,4 +12,5 @@ export function applyEnemyKillReward(enemy: EnemyEntity): void {
   store.addCredits(getEnemyCredits(enemy.enemyType));
   if (!store.isEXBurstActive) store.addExGauge(5);
   store.addTransformGauge(TRANSFORM_GAIN_ENEMY_KILL);
+  store.incrementEnemiesKilled();
 }

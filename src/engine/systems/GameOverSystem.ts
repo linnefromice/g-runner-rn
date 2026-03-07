@@ -20,6 +20,7 @@ export const gameOverSystem: GameSystem<GameEntities> = (entities) => {
     entities.stageDuration > 0 &&
     entities.stageTime >= entities.stageDuration
   ) {
+    store.setFinalStageTime(entities.stageTime);
     store.setStageClear(true);
   }
 };

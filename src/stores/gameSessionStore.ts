@@ -49,6 +49,13 @@ interface GameSessionState {
   score: number;
   credits: number;
 
+  // Bonus tracking
+  damageTaken: number;
+  awakenedCount: number;
+  enemiesSpawned: number;
+  enemiesKilled: number;
+  finalStageTime: number;
+
   // Stage
   currentStageId: number;
   isPaused: boolean;
@@ -75,6 +82,9 @@ interface GameSessionState {
   activateAwakened: () => void;
   deactivateAwakened: () => void;
   setAwakenedWarning: (value: boolean) => void;
+  incrementEnemiesSpawned: (count?: number) => void;
+  incrementEnemiesKilled: () => void;
+  setFinalStageTime: (time: number) => void;
   setGameOver: (value: boolean) => void;
   setStageClear: (value: boolean) => void;
   setPaused: (value: boolean) => void;
@@ -103,6 +113,11 @@ const INITIAL_STATE = {
   transformGauge: 0,
   score: 0,
   credits: 0,
+  damageTaken: 0,
+  awakenedCount: 0,
+  enemiesSpawned: 0,
+  enemiesKilled: 0,
+  finalStageTime: 0,
   currentStageId: 1,
   isPaused: false,
   isGameOver: false,
@@ -116,7 +131,7 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
 
   takeDamage: (damage) => {
     const newHp = Math.max(0, get().hp - damage);
-    set({ hp: newHp, isInvincible: true });
+    set((s) => ({ hp: newHp, isInvincible: true, damageTaken: s.damageTaken + damage }));
   },
 
   heal: (amount) => set((s) => ({ hp: Math.min(s.maxHp, s.hp + amount) })),
@@ -204,6 +219,7 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
       previousForm: s.currentForm,
       currentForm: 'SD_Awakened',
       comboCount: 0,
+      awakenedCount: s.awakenedCount + 1,
     })),
 
   deactivateAwakened: () =>
@@ -215,6 +231,10 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
     })),
 
   setAwakenedWarning: (value) => set({ awakenedWarning: value }),
+
+  incrementEnemiesSpawned: (count = 1) => set((s) => ({ enemiesSpawned: s.enemiesSpawned + count })),
+  incrementEnemiesKilled: () => set((s) => ({ enemiesKilled: s.enemiesKilled + 1 })),
+  setFinalStageTime: (time) => set({ finalStageTime: time }),
 
   setGameOver: (value) => set({ isGameOver: value }),
   setStageClear: (value) => set({ isStageClear: value }),
