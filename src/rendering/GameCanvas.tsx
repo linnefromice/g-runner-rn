@@ -137,17 +137,12 @@ function EntitySlot({
     <>
       {/* Path: filled shape (all path-based entities except shockwave) */}
       <Path path={pathStr} color={color} opacity={fillOpacity}>
-        <Shadow dx={0} dy={0} blur={4} color={color} inner />
-        <Shadow dx={0} dy={0} blur={10} color={color} />
+        <Shadow dx={0} dy={0} blur={8} color={color} />
       </Path>
       {/* Path: stroke ring (shockwave only) */}
-      <Path path={pathStr} color={color} opacity={strokeOpacity} style="stroke" strokeWidth={2}>
-        <Shadow dx={0} dy={0} blur={12} color={color} />
-      </Path>
+      <Path path={pathStr} color={color} opacity={strokeOpacity} style="stroke" strokeWidth={2} />
       {/* Rect fallback (gate, boostLane) */}
-      <RoundedRect x={x} y={y} width={width} height={height} r={2} color={color} opacity={rectOpacity}>
-        <Shadow dx={0} dy={0} blur={6} color={color} />
-      </RoundedRect>
+      <RoundedRect x={x} y={y} width={width} height={height} r={2} color={color} opacity={rectOpacity} />
       {/* Gate label text */}
       <SkiaText x={labelX} y={labelY} text={label} font={gateLabelFont} color="#FFFFFF" opacity={rectOpacity} />
     </>

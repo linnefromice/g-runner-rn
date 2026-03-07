@@ -35,7 +35,9 @@ export function useGameLoop<E extends Entities>(
         prevTimeRef.current = timestamp;
       }
 
-      const delta = timestamp - prevTimeRef.current;
+      // Clamp delta to prevent tunneling when FPS drops below ~30fps
+      const rawDelta = timestamp - prevTimeRef.current;
+      const delta = Math.min(rawDelta, 33);
       prevTimeRef.current = timestamp;
 
       const time: TimeInfo = {
