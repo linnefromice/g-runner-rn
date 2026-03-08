@@ -9,6 +9,8 @@ export interface DifficultyParams {
   maxConcurrentEnemies: number;
   /** Multiplier applied to enemy bullet speed (default 1.0) */
   bulletSpeedMultiplier: number;
+  /** Multiplier applied to enemy attack intervals — lower = faster shooting (default 1.0) */
+  attackIntervalMultiplier: number;
 }
 
 export type StageEvent =

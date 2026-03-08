@@ -52,6 +52,8 @@ export interface BulletEntity extends BaseEntity {
   vx?: number;
   /** Directional velocity Y (logical units/sec). When set, overrides straight-line movement. */
   vy?: number;
+  /** Sine-wave horizontal amplitude (logical units). Creates oscillating bullet trajectory. */
+  waveAmplitude?: number;
 }
 
 export interface GateEntity extends BaseEntity {

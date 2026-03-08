@@ -8,8 +8,12 @@ import { acquireFromPool } from '@/engine/pool';
 /** Spread shot half-angle in radians (~15 degrees) */
 const SPREAD_HALF_ANGLE = Math.PI / 12;
 
+/** Sine-wave bullet amplitude for stationary enemies (logical units) */
+const WAVE_BULLET_AMPLITUDE = 60;
+
 export function createEnemyAISystem(difficulty: DifficultyParams): GameSystem<GameEntities> {
   const bulletSpeedMul = difficulty.bulletSpeedMultiplier;
+  const atkIntervalMul = difficulty.attackIntervalMultiplier;
 
   return (entities, { time }) => {
     const dt = time.delta / 1000;
@@ -59,7 +63,8 @@ export function createEnemyAISystem(difficulty: DifficultyParams): GameSystem<Ga
       if (stats.attackInterval <= 0) continue;
 
       enemy.shootTimer += dt;
-      if (enemy.shootTimer >= stats.attackInterval) {
+      const adjustedInterval = stats.attackInterval * atkIntervalMul;
+      if (enemy.shootTimer >= adjustedInterval) {
         enemy.shootTimer = 0;
 
         const fireX = enemy.x + enemy.width / 2;
@@ -80,7 +85,6 @@ export function createEnemyAISystem(difficulty: DifficultyParams): GameSystem<Ga
                 acquireFromPool(entities.enemyBullets, bullet);
               }
             } else {
-              // Player dead — fire straight down
               const bullet = createEnemyBullet(fireX, fireY, stats.attackDamage, { speed: baseSpeed });
               acquireFromPool(entities.enemyBullets, bullet);
             }
@@ -89,7 +93,7 @@ export function createEnemyAISystem(difficulty: DifficultyParams): GameSystem<Ga
           case 'phalanx': {
             // 3-way spread shot
             for (let i = -1; i <= 1; i++) {
-              const angle = Math.PI / 2 + i * SPREAD_HALF_ANGLE; // PI/2 = straight down
+              const angle = Math.PI / 2 + i * SPREAD_HALF_ANGLE;
               const vx = Math.cos(angle) * baseSpeed;
               const vy = Math.sin(angle) * baseSpeed;
               const bullet = createEnemyBullet(fireX, fireY, stats.attackDamage, { speed: baseSpeed, vx, vy });
@@ -98,16 +102,24 @@ export function createEnemyAISystem(difficulty: DifficultyParams): GameSystem<Ga
             break;
           }
           case 'juggernaut': {
-            // 3-turret sequential firing (existing behavior) + speed scaling
+            // 3-turret sequential firing + speed scaling
             const offsets = [0.2, 0.5, 0.8];
-            const turretPhase = Math.floor(enemy.moveTimer / stats.attackInterval) % 3;
+            const turretPhase = Math.floor(enemy.moveTimer / adjustedInterval) % 3;
             const turretX = enemy.x + enemy.width * offsets[turretPhase];
             const bullet = createEnemyBullet(turretX, fireY, stats.attackDamage, { speed: baseSpeed });
             acquireFromPool(entities.enemyBullets, bullet);
             break;
           }
+          case 'stationary': {
+            // Sine-wave bullet: oscillates horizontally as it falls
+            const bullet = createEnemyBullet(fireX, fireY, stats.attackDamage, {
+              speed: baseSpeed,
+              waveAmplitude: WAVE_BULLET_AMPLITUDE,
+            });
+            acquireFromPool(entities.enemyBullets, bullet);
+            break;
+          }
           default: {
-            // Stationary: straight down with speed scaling
             const bullet = createEnemyBullet(fireX, fireY, stats.attackDamage, { speed: baseSpeed });
             acquireFromPool(entities.enemyBullets, bullet);
             break;

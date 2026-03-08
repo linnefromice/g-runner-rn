@@ -163,6 +163,14 @@ export const GATE_ROULETTE_ATK_PENALTY: GateDefinition = {
   rouletteAlternateLabel: 'ATK +10',
 };
 
+// === Weaker recovery gates (for later stages) ===
+
+export const GATE_HEAL_15: GateDefinition = {
+  type: 'recovery',
+  displayLabel: 'HP +15',
+  effects: [{ kind: 'heal', value: 15 }],
+};
+
 // === Gate pair configs ===
 
 export const PAIR_ATK_SPD: GatePairConfig = {

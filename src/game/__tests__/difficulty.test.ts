@@ -9,6 +9,7 @@ describe('getDifficultyForStage', () => {
     expect(d.enemyAtkMultiplier).toBe(1.0);
     expect(d.maxConcurrentEnemies).toBe(2);
     expect(d.bulletSpeedMultiplier).toBe(1.0);
+    expect(d.attackIntervalMultiplier).toBe(1.0);
   });
 
   it('scales correctly for stage 5', () => {
@@ -19,6 +20,7 @@ describe('getDifficultyForStage', () => {
     expect(d.enemyAtkMultiplier).toBeCloseTo(1.32);
     expect(d.maxConcurrentEnemies).toBe(4);
     expect(d.bulletSpeedMultiplier).toBeCloseTo(1.2);
+    expect(d.attackIntervalMultiplier).toBeCloseTo(0.84);
   });
 
   it('clamps spawn interval to 1.2 minimum', () => {
