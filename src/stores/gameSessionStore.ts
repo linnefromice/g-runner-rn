@@ -7,9 +7,7 @@ import {
   PLAYER_INITIAL_SPEED,
   PLAYER_INITIAL_FIRE_RATE,
   COMBO_THRESHOLD,
-  AWAKENED_DURATION,
   EX_GAUGE_MAX,
-  EX_BURST_DURATION,
   TRANSFORM_GAUGE_MAX,
 } from '@/constants/balance';
 import { useSaveDataStore } from '@/stores/saveDataStore';
@@ -31,14 +29,11 @@ interface GameSessionState {
   // Combo
   comboCount: number;
   isAwakened: boolean;
-  awakenedTimer: number;
   awakenedWarning: boolean;
 
   // EX
   exGauge: number;
   isEXBurstActive: boolean;
-  exBurstTimer: number;
-  exBurstTickTimer: number;
 
   // Transform
   primaryForm: MechaFormId;
@@ -104,12 +99,9 @@ const INITIAL_STATE = {
   isInvincible: false,
   comboCount: 0,
   isAwakened: false,
-  awakenedTimer: 0,
   awakenedWarning: false,
   exGauge: 0,
   isEXBurstActive: false,
-  exBurstTimer: 0,
-  exBurstTickTimer: 0,
   primaryForm: 'SD_Standard' as MechaFormId,
   secondaryForm: 'SD_HeavyArtillery' as MechaFormId,
   transformGauge: 0,
@@ -154,16 +146,10 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
   activateEXBurst: () => {
     const s = get();
     if (s.exGauge < EX_GAUGE_MAX || s.isEXBurstActive) return;
-    set({
-      exGauge: 0,
-      isEXBurstActive: true,
-      exBurstTimer: EX_BURST_DURATION,
-      exBurstTickTimer: 0,
-    });
+    set({ exGauge: 0, isEXBurstActive: true });
   },
 
-  deactivateEXBurst: () =>
-    set({ isEXBurstActive: false, exBurstTimer: 0, exBurstTickTimer: 0 }),
+  deactivateEXBurst: () => set({ isEXBurstActive: false }),
 
   addTransformGauge: (amount) =>
     set((s) => ({ transformGauge: Math.min(TRANSFORM_GAUGE_MAX, s.transformGauge + amount) })),
@@ -221,7 +207,6 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
   activateAwakened: () =>
     set((s) => ({
       isAwakened: true,
-      awakenedTimer: AWAKENED_DURATION,
       previousForm: s.currentForm,
       currentForm: 'SD_Awakened',
       comboCount: 0,
@@ -231,7 +216,6 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
   deactivateAwakened: () =>
     set((s) => ({
       isAwakened: false,
-      awakenedTimer: 0,
       awakenedWarning: false,
       currentForm: s.previousForm,
     })),
