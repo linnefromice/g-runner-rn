@@ -1,16 +1,14 @@
 import { useGameSessionStore } from '@/stores/gameSessionStore';
-import { AWAKENED_DURATION } from '@/constants/balance';
 
 describe('Awakened system store logic', () => {
   beforeEach(() => {
     useGameSessionStore.getState().resetSession(1);
   });
 
-  test('activateAwakened sets isAwakened and timer', () => {
+  test('activateAwakened sets isAwakened and form', () => {
     useGameSessionStore.getState().activateAwakened();
     const state = useGameSessionStore.getState();
     expect(state.isAwakened).toBe(true);
-    expect(state.awakenedTimer).toBe(AWAKENED_DURATION);
     expect(state.currentForm).toBe('SD_Awakened');
     expect(state.comboCount).toBe(0);
   });
@@ -21,7 +19,6 @@ describe('Awakened system store logic', () => {
     useGameSessionStore.getState().deactivateAwakened();
     const state = useGameSessionStore.getState();
     expect(state.isAwakened).toBe(false);
-    expect(state.awakenedTimer).toBe(0);
     expect(state.awakenedWarning).toBe(false);
     expect(state.currentForm).toBe('SD_HeavyArtillery');
   });
@@ -64,6 +61,5 @@ describe('Awakened system store logic', () => {
     const state = useGameSessionStore.getState();
     expect(state.isAwakened).toBe(false);
     expect(state.awakenedWarning).toBe(false);
-    expect(state.awakenedTimer).toBe(0);
   });
 });

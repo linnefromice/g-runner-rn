@@ -1,5 +1,17 @@
 import { HITBOX } from '@/constants/dimensions';
 
+type Box = { x: number; y: number; width: number; height: number };
+
+/** Get center coordinates of an entity */
+export function getCenter(e: Box): { x: number; y: number } {
+  return { x: e.x + e.width / 2, y: e.y + e.height / 2 };
+}
+
+/** Euclidean distance between two points */
+export function getDistance(x1: number, y1: number, x2: number, y2: number): number {
+  return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+}
+
 /** AABB overlap check between two entities */
 export function checkAABBOverlap(
   a: { x: number; y: number; width: number; height: number },

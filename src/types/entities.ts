@@ -144,6 +144,12 @@ export interface GameEntities {
   justTFTimer: number;
   /** Shockwave visual effect timer (ms) */
   shockwaveTimer: number;
+  /** Awakened mode countdown timer (ms) — managed by AwakenedSystem */
+  awakenedTimer: number;
+  /** EX Burst countdown timer (ms) — managed by EXBurstSystem */
+  exBurstTimer: number;
+  /** EX Burst damage tick accumulator (ms) */
+  exBurstTickTimer: number;
   /** Background scroll offset */
   scrollY: number;
   /** Screen dimensions for boundary checks */

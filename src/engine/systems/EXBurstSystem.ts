@@ -1,6 +1,6 @@
 import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
-import { EX_BURST_WIDTH, EX_BURST_DAMAGE, EX_BURST_TICK_INTERVAL } from '@/constants/balance';
+import { EX_BURST_WIDTH, EX_BURST_DAMAGE, EX_BURST_TICK_INTERVAL, EX_BURST_DURATION } from '@/constants/balance';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
 import { deactivateBullet } from '@/engine/entities/Bullet';
 import { updateBossPhase } from '@/engine/systems/bossPhase';
@@ -11,23 +11,26 @@ export const exBurstSystem: GameSystem<GameEntities> = (entities, { time }) => {
   const store = useGameSessionStore.getState();
   if (!store.isEXBurstActive) return;
 
-  const dtMs = time.delta;
-  const newTimer = store.exBurstTimer - dtMs;
-  const newTickTimer = store.exBurstTickTimer + dtMs;
+  // Initialize timer on first frame of EX Burst activation
+  if (entities.exBurstTimer === 0) {
+    entities.exBurstTimer = EX_BURST_DURATION;
+    entities.exBurstTickTimer = 0;
+  }
 
-  if (newTimer <= 0) {
+  const dtMs = time.delta;
+  entities.exBurstTimer -= dtMs;
+  entities.exBurstTickTimer += dtMs;
+
+  if (entities.exBurstTimer <= 0) {
+    entities.exBurstTimer = 0;
+    entities.exBurstTickTimer = 0;
     store.deactivateEXBurst();
     return;
   }
 
-  // Update timers
-  useGameSessionStore.setState({
-    exBurstTimer: newTimer,
-    exBurstTickTimer: newTickTimer >= EX_BURST_TICK_INTERVAL ? 0 : newTickTimer,
-  });
-
   // Only apply damage on tick intervals
-  if (newTickTimer < EX_BURST_TICK_INTERVAL) return;
+  if (entities.exBurstTickTimer < EX_BURST_TICK_INTERVAL) return;
+  entities.exBurstTickTimer -= EX_BURST_TICK_INTERVAL;
 
   const player = entities.player;
   const beamLeft = player.x + player.width / 2 - EX_BURST_WIDTH / 2;

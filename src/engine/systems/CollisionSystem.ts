@@ -1,6 +1,6 @@
 import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
-import { checkAABBOverlap, getPlayerHitbox, getPlayerVisualHitbox } from '@/engine/collision';
+import { checkAABBOverlap, getPlayerHitbox, getPlayerVisualHitbox, getCenter, getDistance } from '@/engine/collision';
 import { deactivateBullet } from '@/engine/entities/Bullet';
 import { IFRAME_DURATION, EXPLOSION_RADIUS, ENEMY_STATS, GRAZE_EX_GAIN, GRAZE_TF_GAIN, GRAZE_SCORE, DEBRIS_CONTACT_DAMAGE, DEBRIS_DESTROY_SCORE, GROWTH_GATE_INITIAL_RATIO, GROWTH_GATE_PER_HIT, JUST_TF_SHOCKWAVE_RADIUS, JUST_TF_SHOCKWAVE_DAMAGE, JUST_TF_SCORE, JUST_TF_EX_GAIN, SHOCKWAVE_EFFECT_DURATION } from '@/constants/balance';
 import { generateGateLabel } from '@/engine/entities/Gate';
@@ -11,6 +11,8 @@ import { applyBossKill } from '@/engine/systems/bossKill';
 import { deactivateDebris } from '@/engine/entities/Debris';
 import { onPlayerHit, onParry, onGraze, onDebrisDestroy, onBulletImpact } from '@/engine/effects';
 
+type Store = ReturnType<typeof useGameSessionStore.getState>;
+
 export const collisionSystem: GameSystem<GameEntities> = (entities) => {
   const player = entities.player;
   if (!player.active) return;
@@ -18,219 +20,206 @@ export const collisionSystem: GameSystem<GameEntities> = (entities) => {
   const playerHB = getPlayerHitbox(player);
   const store = useGameSessionStore.getState();
 
-  // Player bullets → Enemies
+  // Offensive collisions (player bullets outgoing)
+  checkPlayerBulletsVsEnemies(entities, store);
+  checkPlayerBulletsVsDebris(entities, store);
+  checkPlayerBulletsVsGrowthGates(entities);
+  checkPlayerBulletsVsBoss(entities, store);
+
+  // Graze detection
+  checkGraze(entities, player, playerHB, store);
+
+  // Defensive collisions (damage to player)
+  if (!player.isInvincible) {
+    checkDamageToPlayer(entities, player, playerHB, store);
+  }
+};
+
+// --- Offensive: Player bullets outgoing ---
+
+function checkPlayerBulletsVsEnemies(entities: GameEntities, store: Store) {
   for (const bullet of entities.playerBullets) {
     if (!bullet.active) continue;
     for (const enemy of entities.enemies) {
       if (!enemy.active) continue;
-      // Pierce: skip enemies already hit by this bullet
       if (bullet.specialAbility === 'pierce' && bullet.piercedEnemyIds?.has(enemy.id)) continue;
-      if (checkAABBOverlap(bullet, enemy)) {
-        // Phalanx shield: upper half blocks normal bullets
-        if (enemy.enemyType === 'phalanx') {
-          const bulletCenterY = bullet.y + bullet.height / 2;
-          const enemyCenterY = enemy.y + enemy.height / 2;
-          if (bulletCenterY < enemyCenterY) {
-            // Shield hit — only explosion, pierce, and shield_pierce bypass
-            const ability = bullet.specialAbility;
-            if (ability !== 'explosion_radius' && ability !== 'pierce' && ability !== 'shield_pierce') {
-              deactivateBullet(bullet);
-              break;
-            }
+      if (!checkAABBOverlap(bullet, enemy)) continue;
+
+      // Phalanx shield: upper half blocks normal bullets
+      if (enemy.enemyType === 'phalanx') {
+        const bulletCenterY = bullet.y + bullet.height / 2;
+        const enemyCenterY = enemy.y + enemy.height / 2;
+        if (bulletCenterY < enemyCenterY) {
+          const ability = bullet.specialAbility;
+          if (ability !== 'explosion_radius' && ability !== 'pierce' && ability !== 'shield_pierce') {
+            deactivateBullet(bullet);
+            break;
           }
         }
-
-        // Capture impact point before potential deactivation
-        const hitX = bullet.x + bullet.width / 2;
-        const hitY = bullet.y + bullet.height / 2;
-
-        enemy.hp -= bullet.damage;
-
-        if (bullet.specialAbility === 'pierce') {
-          // Pierce: don't deactivate, record hit
-          bullet.piercedEnemyIds?.add(enemy.id);
-        } else if (bullet.specialAbility === 'explosion_radius') {
-          // Explosion: deactivate and AoE
-          deactivateBullet(bullet);
-          for (const other of entities.enemies) {
-            if (!other.active || other.id === enemy.id) continue;
-            const otherCX = other.x + other.width / 2;
-            const otherCY = other.y + other.height / 2;
-            const dist = Math.sqrt((hitX - otherCX) ** 2 + (hitY - otherCY) ** 2);
-            if (dist <= EXPLOSION_RADIUS) {
-              other.hp -= bullet.damage;
-              if (other.hp <= 0) applyEnemyKillReward(other, entities);
-            }
-          }
-        } else {
-          // Normal: deactivate bullet
-          deactivateBullet(bullet);
-        }
-
-        // Kill check for the directly-hit enemy
-        if (enemy.hp <= 0) {
-          applyEnemyKillReward(enemy, entities);
-        } else if (bullet.specialAbility !== 'pierce') {
-          onBulletImpact(entities, hitX, hitY);
-        }
-
-        // Pierce continues to next enemy; others break
-        if (bullet.specialAbility !== 'pierce') break;
       }
+
+      const hit = getCenter(bullet);
+      enemy.hp -= bullet.damage;
+
+      if (bullet.specialAbility === 'pierce') {
+        bullet.piercedEnemyIds?.add(enemy.id);
+      } else if (bullet.specialAbility === 'explosion_radius') {
+        deactivateBullet(bullet);
+        applyExplosionAoE(entities, hit.x, hit.y, bullet.damage);
+      } else {
+        deactivateBullet(bullet);
+      }
+
+      if (enemy.hp <= 0) {
+        applyEnemyKillReward(enemy, entities);
+      } else if (bullet.specialAbility !== 'pierce') {
+        onBulletImpact(entities, hit.x, hit.y);
+      }
+
+      if (bullet.specialAbility !== 'pierce') break;
     }
   }
+}
 
-  // Player bullets → Debris
+function checkPlayerBulletsVsDebris(entities: GameEntities, store: Store) {
   for (const bullet of entities.playerBullets) {
     if (!bullet.active) continue;
     for (const debris of entities.debris) {
       if (!debris.active) continue;
-      if (checkAABBOverlap(bullet, debris)) {
-        if (bullet.specialAbility === 'pierce') {
-          // Pierce bullets pass through debris entirely
-          continue;
-        }
-        if (bullet.specialAbility === 'explosion_radius') {
-          // Explosion: damage debris, deactivate bullet, AoE to nearby enemies
-          debris.hp -= bullet.damage;
-          const impactX = bullet.x + bullet.width / 2;
-          const impactY = bullet.y + bullet.height / 2;
-          deactivateBullet(bullet);
-          for (const enemy of entities.enemies) {
-            if (!enemy.active) continue;
-            const ecx = enemy.x + enemy.width / 2;
-            const ecy = enemy.y + enemy.height / 2;
-            const dist = Math.sqrt((impactX - ecx) ** 2 + (impactY - ecy) ** 2);
-            if (dist <= EXPLOSION_RADIUS) {
-              enemy.hp -= bullet.damage;
-              if (enemy.hp <= 0) applyEnemyKillReward(enemy, entities);
-            }
-          }
-          if (debris.hp <= 0) {
-            deactivateDebris(debris);
-            store.addScore(DEBRIS_DESTROY_SCORE);
-            onDebrisDestroy(entities, debris.x + debris.width / 2, debris.y + debris.height / 2);
-          }
-          break; // bullet consumed
-        }
-        // Normal/homing/shield_pierce bullets: absorbed by debris (no damage to debris)
+      if (!checkAABBOverlap(bullet, debris)) continue;
+
+      if (bullet.specialAbility === 'pierce') continue;
+
+      if (bullet.specialAbility === 'explosion_radius') {
+        debris.hp -= bullet.damage;
+        const impact = getCenter(bullet);
         deactivateBullet(bullet);
+        applyExplosionAoE(entities, impact.x, impact.y, bullet.damage);
+        if (debris.hp <= 0) {
+          const dc = getCenter(debris);
+          deactivateDebris(debris);
+          store.addScore(DEBRIS_DESTROY_SCORE);
+          onDebrisDestroy(entities, dc.x, dc.y);
+        }
         break;
       }
+
+      // Normal/homing/shield_pierce bullets: absorbed by debris
+      deactivateBullet(bullet);
+      break;
     }
   }
+}
 
-  // Player bullets → Growth Gates
+function checkPlayerBulletsVsGrowthGates(entities: GameEntities) {
   for (const bullet of entities.playerBullets) {
     if (!bullet.active) continue;
     for (const gate of entities.gates) {
       if (!gate.active || gate.passed || gate.gateType !== 'growth') continue;
-      if (checkAABBOverlap(bullet, gate)) {
-        gate.growthHits = (gate.growthHits ?? 0) + 1;
-        if (gate.baseEffectValue != null && gate.growthMax != null) {
-          const newValue = Math.min(
-            gate.growthMax,
-            gate.baseEffectValue * GROWTH_GATE_INITIAL_RATIO + gate.growthHits * GROWTH_GATE_PER_HIT
-          );
-          if (gate.effects.length > 0 && gate.effects[0].kind !== 'refit') {
-            gate.effects[0] = { ...gate.effects[0], value: newValue };
-          }
-          gate.displayLabel = generateGateLabel(gate.effects[0]);
+      if (!checkAABBOverlap(bullet, gate)) continue;
+
+      gate.growthHits = (gate.growthHits ?? 0) + 1;
+      if (gate.baseEffectValue != null && gate.growthMax != null) {
+        const newValue = Math.min(
+          gate.growthMax,
+          gate.baseEffectValue * GROWTH_GATE_INITIAL_RATIO + gate.growthHits * GROWTH_GATE_PER_HIT
+        );
+        if (gate.effects.length > 0 && gate.effects[0].kind !== 'refit') {
+          gate.effects[0] = { ...gate.effects[0], value: newValue };
         }
-        deactivateBullet(bullet);
-        break;
+        gate.displayLabel = generateGateLabel(gate.effects[0]);
       }
+      deactivateBullet(bullet);
+      break;
     }
   }
+}
 
-  // Player bullets → Boss
-  if (entities.boss?.active) {
-    for (const bullet of entities.playerBullets) {
-      if (!bullet.active) continue;
-      // Pierce: skip boss if already hit by this bullet
-      if (bullet.specialAbility === 'pierce' && bullet.piercedEnemyIds?.has(entities.boss.id)) continue;
-      if (checkAABBOverlap(bullet, entities.boss)) {
-        // Capture impact point before potential deactivation
-        const hitX = bullet.x + bullet.width / 2;
-        const hitY = bullet.y + bullet.height / 2;
+function checkPlayerBulletsVsBoss(entities: GameEntities, store: Store) {
+  if (!entities.boss?.active) return;
 
-        const prevPercent = Math.floor((entities.boss.hp / entities.boss.maxHp) * 100);
-        entities.boss.hp -= bullet.damage;
-        const newPercent = Math.floor((entities.boss.hp / entities.boss.maxHp) * 100);
+  for (const bullet of entities.playerBullets) {
+    if (!bullet.active) continue;
+    if (bullet.specialAbility === 'pierce' && bullet.piercedEnemyIds?.has(entities.boss.id)) continue;
+    if (!checkAABBOverlap(bullet, entities.boss)) continue;
 
-        if (bullet.specialAbility === 'pierce') {
-          // Don't deactivate pierce bullets on boss, record hit
-          bullet.piercedEnemyIds?.add(entities.boss.id);
-        } else if (bullet.specialAbility === 'explosion_radius') {
-          deactivateBullet(bullet);
-          for (const enemy of entities.enemies) {
-            if (!enemy.active) continue;
-            const ecx = enemy.x + enemy.width / 2;
-            const ecy = enemy.y + enemy.height / 2;
-            if (Math.sqrt((hitX - ecx) ** 2 + (hitY - ecy) ** 2) <= EXPLOSION_RADIUS) {
-              enemy.hp -= bullet.damage;
-              if (enemy.hp <= 0) applyEnemyKillReward(enemy, entities);
-            }
-          }
-        } else {
-          deactivateBullet(bullet);
-        }
+    const hit = getCenter(bullet);
+    const prevPercent = Math.floor((entities.boss.hp / entities.boss.maxHp) * 100);
+    entities.boss.hp -= bullet.damage;
+    const newPercent = Math.floor((entities.boss.hp / entities.boss.maxHp) * 100);
 
-        const percentDamaged = prevPercent - newPercent;
-        if (percentDamaged > 0) {
-          store.addScore(percentDamaged * 50);
-        }
-        if (!store.isEXBurstActive) store.addExGauge(2);
+    if (bullet.specialAbility === 'pierce') {
+      bullet.piercedEnemyIds?.add(entities.boss.id);
+    } else if (bullet.specialAbility === 'explosion_radius') {
+      deactivateBullet(bullet);
+      applyExplosionAoE(entities, hit.x, hit.y, bullet.damage);
+    } else {
+      deactivateBullet(bullet);
+    }
 
-        updateBossPhase(entities.boss);
+    const percentDamaged = prevPercent - newPercent;
+    if (percentDamaged > 0) store.addScore(percentDamaged * 50);
+    if (!store.isEXBurstActive) store.addExGauge(2);
 
-        if (entities.boss.hp <= 0) {
-          applyBossKill(entities);
-        } else {
-          onBulletImpact(entities, hitX, hitY);
-        }
-      }
+    updateBossPhase(entities.boss);
+
+    if (entities.boss.hp <= 0) {
+      applyBossKill(entities);
+    } else {
+      onBulletImpact(entities, hit.x, hit.y);
     }
   }
+}
 
-  // Graze detection: near-miss between visual hitbox and actual hitbox
-  if (!player.isInvincible && !store.isAwakened) {
-    const playerVisualHB = getPlayerVisualHitbox(player);
-    for (const bullet of entities.enemyBullets) {
-      if (!bullet.active || bullet.grazed) continue;
-      const overlapVisual = checkAABBOverlap(playerVisualHB, bullet);
-      const overlapActual = checkAABBOverlap(playerHB, bullet);
-      if (overlapVisual && !overlapActual) {
-        bullet.grazed = true;
-        store.addScore(GRAZE_SCORE);
-        if (!store.isEXBurstActive) store.addExGauge(GRAZE_EX_GAIN);
-        store.addTransformGauge(GRAZE_TF_GAIN);
-        onGraze(entities, bullet.x + bullet.width / 2, bullet.y + bullet.height / 2);
-      }
+// --- Graze ---
+
+function checkGraze(
+  entities: GameEntities,
+  player: GameEntities['player'],
+  playerHB: ReturnType<typeof getPlayerHitbox>,
+  store: Store,
+) {
+  if (player.isInvincible || store.isAwakened) return;
+
+  const playerVisualHB = getPlayerVisualHitbox(player);
+  for (const bullet of entities.enemyBullets) {
+    if (!bullet.active || bullet.grazed) continue;
+    const overlapVisual = checkAABBOverlap(playerVisualHB, bullet);
+    const overlapActual = checkAABBOverlap(playerHB, bullet);
+    if (overlapVisual && !overlapActual) {
+      bullet.grazed = true;
+      store.addScore(GRAZE_SCORE);
+      if (!store.isEXBurstActive) store.addExGauge(GRAZE_EX_GAIN);
+      store.addTransformGauge(GRAZE_TF_GAIN);
+      const bc = getCenter(bullet);
+      onGraze(entities, bc.x, bc.y);
     }
   }
+}
 
-  // Skip damage checks if player is invincible
-  if (player.isInvincible) return;
+// --- Defensive: Damage to player ---
 
-  // Awakened with homing_invincible: immune to body contact damage
+function checkDamageToPlayer(
+  entities: GameEntities,
+  player: GameEntities['player'],
+  playerHB: ReturnType<typeof getPlayerHitbox>,
+  store: Store,
+) {
   const isAwakenedInvincible = store.isAwakened;
 
   // Enemy bullets → Player (always takes damage, even when awakened)
   for (const bullet of entities.enemyBullets) {
     if (!bullet.active) continue;
-    if (checkAABBOverlap(playerHB, bullet)) {
-      // Just TF Parry check
-      if (entities.justTFTimer > 0) {
-        deactivateBullet(bullet);
-        applyParryShockwave(entities, store);
-        return; // No damage taken
-      }
+    if (!checkAABBOverlap(playerHB, bullet)) continue;
 
+    if (entities.justTFTimer > 0) {
       deactivateBullet(bullet);
-      applyDamage(entities, player, bullet.damage, store);
+      applyParryShockwave(entities, store);
       return;
     }
+    deactivateBullet(bullet);
+    applyDamage(entities, player, bullet.damage, store);
+    return;
   }
 
   // Enemy collision → Player (skip if awakened)
@@ -257,43 +246,49 @@ export const collisionSystem: GameSystem<GameEntities> = (entities) => {
 
   // Boss collision → Player (skip if awakened)
   if (!isAwakenedInvincible && entities.boss?.active && checkAABBOverlap(playerHB, entities.boss)) {
-    // Just TF Parry check for boss contact
     if (entities.justTFTimer > 0) {
       applyParryShockwave(entities, store);
       return;
     }
     applyDamage(entities, player, 50, store); // §6.2 boss collision
   }
-};
+}
+
+// --- Shared helpers ---
+
+function applyExplosionAoE(entities: GameEntities, x: number, y: number, damage: number) {
+  for (const other of entities.enemies) {
+    if (!other.active) continue;
+    const oc = getCenter(other);
+    if (getDistance(x, y, oc.x, oc.y) <= EXPLOSION_RADIUS) {
+      other.hp -= damage;
+      if (other.hp <= 0) applyEnemyKillReward(other, entities);
+    }
+  }
+}
 
 function applyDamage(
   entities: GameEntities,
   player: GameEntities['player'],
   damage: number,
-  store: ReturnType<typeof useGameSessionStore.getState>
+  store: Store,
 ) {
   store.takeDamage(damage);
   player.isInvincible = true;
   player.invincibleTimer = IFRAME_DURATION;
   store.resetCombo();
-  onPlayerHit(entities, player.x + player.width / 2, player.y + player.height / 2);
+  const pc = getCenter(player);
+  onPlayerHit(entities, pc.x, pc.y);
 }
 
-function applyParryShockwave(
-  entities: GameEntities,
-  store: ReturnType<typeof useGameSessionStore.getState>
-) {
+function applyParryShockwave(entities: GameEntities, store: Store) {
   entities.justTFTimer = 0;
-
-  const pcx = entities.player.x + entities.player.width / 2;
-  const pcy = entities.player.y + entities.player.height / 2;
+  const pc = getCenter(entities.player);
 
   for (const enemy of entities.enemies) {
     if (!enemy.active) continue;
-    const ecx = enemy.x + enemy.width / 2;
-    const ecy = enemy.y + enemy.height / 2;
-    const dist = Math.sqrt((pcx - ecx) ** 2 + (pcy - ecy) ** 2);
-    if (dist <= JUST_TF_SHOCKWAVE_RADIUS) {
+    const ec = getCenter(enemy);
+    if (getDistance(pc.x, pc.y, ec.x, ec.y) <= JUST_TF_SHOCKWAVE_RADIUS) {
       enemy.hp -= JUST_TF_SHOCKWAVE_DAMAGE;
       if (enemy.hp <= 0) applyEnemyKillReward(enemy, entities);
     }
@@ -301,10 +296,8 @@ function applyParryShockwave(
 
   for (const b of entities.enemyBullets) {
     if (!b.active) continue;
-    const bcx = b.x + b.width / 2;
-    const bcy = b.y + b.height / 2;
-    const dist = Math.sqrt((pcx - bcx) ** 2 + (pcy - bcy) ** 2);
-    if (dist <= JUST_TF_SHOCKWAVE_RADIUS) {
+    const bc = getCenter(b);
+    if (getDistance(pc.x, pc.y, bc.x, bc.y) <= JUST_TF_SHOCKWAVE_RADIUS) {
       deactivateBullet(b);
     }
   }
@@ -312,6 +305,5 @@ function applyParryShockwave(
   store.addScore(JUST_TF_SCORE);
   if (!store.isEXBurstActive) store.addExGauge(JUST_TF_EX_GAIN);
   entities.shockwaveTimer = SHOCKWAVE_EFFECT_DURATION;
-
-  onParry(entities, pcx, pcy);
+  onParry(entities, pc.x, pc.y);
 }
