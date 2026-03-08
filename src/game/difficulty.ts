@@ -9,6 +9,7 @@ export function getDifficultyForStage(stageId: number): DifficultyParams {
     enemyAtkMultiplier: 1.0 + (stageId - 1) * 0.08,
     maxConcurrentEnemies: Math.min(7, 2 + Math.floor(stageId / 2)),
     bulletSpeedMultiplier: 1.0 + (stageId - 1) * 0.05,
+    attackIntervalMultiplier: Math.max(0.6, 1.0 - (stageId - 1) * 0.04),
   };
 }
 

@@ -63,7 +63,7 @@ export function createMovementSystem(
     if (b.y + b.height < 0 || b.y > visibleHeight) deactivateBullet(b);
   }
 
-  // Move enemy bullets (directional or straight down)
+  // Move enemy bullets (directional or straight down, with optional sine-wave)
   for (const b of entities.enemyBullets) {
     if (!b.active) continue;
     if (b.vx != null && b.vy != null) {
@@ -71,6 +71,10 @@ export function createMovementSystem(
       b.y += b.vy * dt;
     } else {
       b.y += b.speed * dt;
+    }
+    // Sine-wave horizontal oscillation (uses y-position as phase for consistent spatial pattern)
+    if (b.waveAmplitude) {
+      b.x += Math.sin(b.y * 0.06) * b.waveAmplitude * dt;
     }
     if (b.y > visibleHeight || b.y < -20 || b.x < -20 || b.x > entities.screen.width + 20) {
       deactivateBullet(b);

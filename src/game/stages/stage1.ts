@@ -13,6 +13,7 @@ export const STAGE_1: StageDefinition = {
     enemyAtkMultiplier: 1.0,
     maxConcurrentEnemies: 2,
     bulletSpeedMultiplier: 1.0,
+    attackIntervalMultiplier: 1.0,
   },
   timeline: [
     { time: 5, type: 'enemy_spawn', enemyType: 'stationary', x: 160 },

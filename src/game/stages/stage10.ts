@@ -6,11 +6,14 @@ import {
   GATE_FR_UP,
   GATE_ATK_UP_15,
   GATE_FR_UP_30,
-  GATE_HEAL_50P,
-  GATE_HEAL_FULL,
+  GATE_HEAL_20,
+  GATE_RAPID_GLASS,
+  GATE_TANK,
+  GATE_REFIT_HEAVY,
+  GATE_REFIT_SPEED,
 } from '@/game/gates';
 
-/** Stage 10: Omega Core — Boss 2 stage */
+/** Stage 10: Omega Core — Boss 2 stage, tough pre-boss gauntlet */
 export const STAGE_10: StageDefinition = {
   id: 10,
   name: 'Omega Core',
@@ -28,7 +31,8 @@ export const STAGE_10: StageDefinition = {
       type: 'gate_spawn',
       gateConfig: { layout: 'forced', left: GATE_ATK_UP_15, right: GATE_FR_UP_30 },
     },
-    // Pre-boss wave 2: phalanx + juggernaut
+    // Pre-boss wave 2: phalanx + juggernaut + debris
+    { time: 19, type: 'debris_spawn', x: 120, count: 2 },
     { time: 20, type: 'enemy_spawn', enemyType: 'phalanx', x: 120 },
     { time: 22, type: 'enemy_spawn', enemyType: 'juggernaut', x: 200 },
     { time: 24, type: 'enemy_spawn', enemyType: 'swarm', x: 80, count: 6 },
@@ -38,19 +42,32 @@ export const STAGE_10: StageDefinition = {
       type: 'gate_spawn',
       gateConfig: { layout: 'forced', left: GATE_ATK_UP, right: GATE_FR_UP },
     },
-    // Pre-boss wave 3: dense all-type
+    // Pre-boss wave 3: dense all-type in boost lane
+    { time: 35, type: 'boost_lane_start', x: 60, width: 200 },
     { time: 36, type: 'enemy_spawn', enemyType: 'juggernaut', x: 160 },
     { time: 38, type: 'enemy_spawn', enemyType: 'phalanx', x: 80 },
     { time: 38, type: 'enemy_spawn', enemyType: 'phalanx', x: 240 },
-    // Recovery before boss
+    { time: 41, type: 'boost_lane_end' },
+    // Tradeoff before boss — replaced full heal
     {
       time: 46,
       type: 'gate_spawn',
-      gateConfig: { layout: 'forced', left: GATE_HEAL_FULL, right: GATE_HEAL_50P },
+      gateConfig: { layout: 'optional', left: GATE_RAPID_GLASS, right: GATE_TANK },
     },
-    // Enhance gate (combo 3 → awakening chance)
+    // Refit gate
+    {
+      time: 50,
+      type: 'gate_spawn',
+      gateConfig: { layout: 'forced', left: GATE_REFIT_HEAVY, right: GATE_REFIT_SPEED },
+    },
+    // Enhance gate (combo 3 → awakening chance) + minimal recovery
     {
       time: 54,
+      type: 'gate_spawn',
+      gateConfig: { layout: 'forced', left: GATE_HEAL_20, right: GATE_ATK_UP },
+    },
+    {
+      time: 58,
       type: 'gate_spawn',
       gateConfig: { layout: 'forced', left: GATE_ATK_UP, right: GATE_SPD_UP },
     },
