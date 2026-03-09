@@ -1,5 +1,5 @@
 import type { EnemyEntity, GameEntities } from '@/types/entities';
-import { TRANSFORM_GAIN_ENEMY_KILL } from '@/constants/balance';
+import { TRANSFORM_GAIN_ENEMY_KILL, FORM_XP_ENEMY_KILL, FORM_XP_STRONG_ENEMY_KILL } from '@/constants/balance';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
 import { deactivateEnemy } from '@/engine/entities/Enemy';
 import { getEnemyScore, getEnemyCredits } from '@/game/scoring';
@@ -17,6 +17,11 @@ export function applyEnemyKillReward(enemy: EnemyEntity, entities: GameEntities)
   if (!store.isEXBurstActive) store.addExGauge(5);
   store.addTransformGauge(TRANSFORM_GAIN_ENEMY_KILL);
   store.incrementEnemiesKilled();
+
+  const xp = (enemy.enemyType === 'phalanx' || enemy.enemyType === 'juggernaut')
+    ? FORM_XP_STRONG_ENEMY_KILL
+    : FORM_XP_ENEMY_KILL;
+  store.addFormXP(store.currentForm, xp);
 
   onEnemyKill(entities, cx, cy, score);
 }

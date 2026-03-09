@@ -3,7 +3,7 @@ import type { GameEntities } from '@/types/entities';
 import { checkAABBOverlap, getPlayerHitbox } from '@/engine/collision';
 import { deactivateGate, generateGateLabel } from '@/engine/entities/Gate';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
-import { SCORE, EX_GAIN, TRANSFORM_GAIN_GATE_PASS, ROULETTE_INTERVAL } from '@/constants/balance';
+import { SCORE, EX_GAIN, TRANSFORM_GAIN_GATE_PASS, ROULETTE_INTERVAL, FORM_XP_GATE_ENHANCE } from '@/constants/balance';
 import { onGatePass } from '@/engine/effects';
 import { GATE_COLORS } from '@/constants/colors';
 
@@ -76,6 +76,11 @@ export const gateSystem: GameSystem<GameEntities> = (entities, { time }) => {
       case 'refit':
         store.resetCombo();
         break;
+    }
+
+    // Form XP for enhance/growth/roulette gates
+    if (gate.gateType === 'enhance' || gate.gateType === 'growth' || gate.gateType === 'roulette') {
+      store.addFormXP(store.currentForm, FORM_XP_GATE_ENHANCE);
     }
 
     // Visual effect (capture position BEFORE deactivation moves gate off-screen)
