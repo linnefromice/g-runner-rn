@@ -6,14 +6,16 @@ import { UPGRADE_CONFIG, getUpgradeCost } from '@/game/upgrades';
 import { useTranslation } from '@/i18n';
 import { COLORS } from '@/constants/colors';
 
-type UpgradeKey = 'atk' | 'hp' | 'speed';
+type UpgradeKey = 'atk' | 'hp' | 'speed' | 'def' | 'creditBoost';
 
-const UPGRADE_KEYS: UpgradeKey[] = ['atk', 'hp', 'speed'];
+const UPGRADE_KEYS: UpgradeKey[] = ['atk', 'hp', 'speed', 'def', 'creditBoost'];
 
 const UPGRADE_ACTIONS: Record<UpgradeKey, () => boolean> = {
   atk: () => useSaveDataStore.getState().upgradeAtk(),
   hp: () => useSaveDataStore.getState().upgradeHp(),
   speed: () => useSaveDataStore.getState().upgradeSpeed(),
+  def: () => useSaveDataStore.getState().upgradeDef(),
+  creditBoost: () => useSaveDataStore.getState().upgradeCreditBoost(),
 };
 
 export default function UpgradeScreen() {
@@ -28,6 +30,8 @@ export default function UpgradeScreen() {
       case 'atk': return upgrades.baseAtk;
       case 'hp': return upgrades.baseHp;
       case 'speed': return upgrades.baseSpeed;
+      case 'def': return upgrades.baseDef;
+      case 'creditBoost': return upgrades.baseCreditBoost;
     }
   };
 

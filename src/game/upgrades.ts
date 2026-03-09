@@ -18,6 +18,8 @@ export const UPGRADE_CONFIG: Record<string, UpgradeConfig> = {
   atk:   { effect: 2,    maxLevel: 10, costPerLevel: 100, label: 'ATK' },
   hp:    { effect: 10,   maxLevel: 10, costPerLevel: 100, label: 'HP' },
   speed: { effect: 0.05, maxLevel: 5,  costPerLevel: 100, label: 'Speed' },
+  def:         { effect: 0.03, maxLevel: 5, costPerLevel: 150, label: 'DEF' },
+  creditBoost: { effect: 0.1,  maxLevel: 5, costPerLevel: 200, label: 'CR' },
 };
 
 export const FORM_UNLOCK_CONDITIONS: Record<MechaFormId, FormUnlockCondition> = {
