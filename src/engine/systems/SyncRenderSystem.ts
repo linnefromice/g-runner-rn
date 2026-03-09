@@ -2,7 +2,7 @@ import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
 import type { RenderEntity } from '@/types/rendering';
 import type { SharedValue } from 'react-native-reanimated';
-import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH } from '@/constants/balance';
+import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY } from '@/constants/balance';
 import { COLORS, GATE_COLORS } from '@/constants/colors';
 import { getEntityPath } from '@/rendering/shapes';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
@@ -67,8 +67,32 @@ export function createSyncRenderSystem(
       });
     }
 
-    // Player — form-specific shape
+    // Player trail (afterimage) — drawn behind player
     const p = entities.player;
+    if (p.active) {
+      const playerType = `player_${useGameSessionStore.getState().currentForm}`;
+      for (let i = 0; i < TRAIL_HISTORY_SIZE; i++) {
+        const idx = (p.trailIndex - i - 1 + TRAIL_HISTORY_SIZE * 2) % TRAIL_HISTORY_SIZE;
+        const pos = p.trailHistory[idx];
+        const tdx = p.x - pos.x;
+        const tdy = p.y - pos.y;
+        if (tdx * tdx + tdy * tdy < 1) continue;
+        const age = i + 1;
+        const trailOpacity = TRAIL_BASE_OPACITY * Math.pow(TRAIL_OPACITY_DECAY, age - 1);
+        out.push({
+          type: playerType,
+          x: pos.x,
+          y: pos.y,
+          width: p.width,
+          height: p.height,
+          color: COLORS.entityPlayer,
+          opacity: trailOpacity,
+          path: buildPath(playerType, pos.x, pos.y, p.width, p.height, scale),
+        });
+      }
+    }
+
+    // Player — form-specific shape
     if (p.active) {
       let opacity = 1.0;
       if (p.isInvincible) {
