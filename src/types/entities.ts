@@ -164,6 +164,10 @@ export interface GameEntities {
   shockwaveTimer: number;
   /** Graze ring visual effect timer (ms) */
   grazeRingTimer: number;
+  /** Gate pass flash timer (ms) — B1 */
+  gateFlashTimer: number;
+  /** Gate pass flash color — B1 */
+  gateFlashColor: string;
   /** Awakened mode countdown timer (ms) — managed by AwakenedSystem */
   awakenedTimer: number;
   /** EX Burst countdown timer (ms) — managed by EXBurstSystem */

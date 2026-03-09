@@ -2,7 +2,7 @@ import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
 import type { RenderEntity } from '@/types/rendering';
 import type { SharedValue } from 'react-native-reanimated';
-import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY, GLOW_SCALE, DEPTH_SCALE_MIN, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SPAWN_FADE_DURATION, DANGER_HP_THRESHOLD, DANGER_PULSE_SPEED, BOSS_COLOR_SHIFT_THRESHOLD, GRAZE_RING_RADIUS, GRAZE_RING_DURATION, SPAWN_SCALE_MIN } from '@/constants/balance';
+import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY, GLOW_SCALE, DEPTH_SCALE_MIN, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SPAWN_FADE_DURATION, DANGER_HP_THRESHOLD, DANGER_PULSE_SPEED, BOSS_COLOR_SHIFT_THRESHOLD, GRAZE_RING_RADIUS, GRAZE_RING_DURATION, SPAWN_SCALE_MIN, LASER_WARNING_PULSE_SPEED, BULLET_STRETCH_DIVISOR, BULLET_STRETCH_MAX, GATE_FLASH_DURATION, EX_FULL_FLASH_DURATION, EX_GAUGE_MAX } from '@/constants/balance';
 import { COLORS, GATE_COLORS, ENEMY_TYPE_COLORS, BOSS_PHASE_COLORS } from '@/constants/colors';
 import { getEntityPath } from '@/rendering/shapes';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
@@ -19,6 +19,9 @@ export type OverlayState = {
   dangerOpacity: number;
   bossPhaseOpacity: number;
   awakenedOpacity: number;
+  gateFlashOpacity: number;
+  gateFlashColor: string;
+  exFlashOpacity: number;
 };
 
 export type RenderSyncTarget = SharedValue<RenderEntity[]>;
@@ -74,6 +77,9 @@ export function createSyncRenderSystem(
 ): GameSystem<GameEntities> {
   const out: RenderEntity[] = [];
   const popups: PopupRenderData[] = [];
+  // B3: track EX gauge state for full-transition detection
+  let prevExFull = false;
+  let exFlashTimer = 0;
 
   return (entities, { time }) => {
     out.length = 0;
@@ -84,6 +90,22 @@ export function createSyncRenderSystem(
     // Tick graze ring timer (F3)
     if (entities.grazeRingTimer > 0) {
       entities.grazeRingTimer = Math.max(0, entities.grazeRingTimer - time.delta);
+    }
+
+    // B1: tick gate flash timer
+    if (entities.gateFlashTimer > 0) {
+      entities.gateFlashTimer = Math.max(0, entities.gateFlashTimer - time.delta);
+    }
+
+    // B3: detect EX gauge full transition
+    const store0 = useGameSessionStore.getState();
+    const isExFull = store0.exGauge >= EX_GAUGE_MAX && !store0.isEXBurstActive;
+    if (isExFull && !prevExFull) {
+      exFlashTimer = EX_FULL_FLASH_DURATION;
+    }
+    prevExFull = isExFull;
+    if (exFlashTimer > 0) {
+      exFlashTimer = Math.max(0, exFlashTimer - time.delta);
     }
 
     // Boost Lane (background overlay) — no path, rect-based
@@ -207,32 +229,36 @@ export function createSyncRenderSystem(
       });
     }
 
-    // Player bullets
+    // Player bullets — A3: stretch height by speed for motion feel
     for (const b of entities.playerBullets) {
       if (!b.active) continue;
+      const pbStretch = Math.min(BULLET_STRETCH_MAX, 1 + b.speed / BULLET_STRETCH_DIVISOR);
+      const pbH = b.height * pbStretch;
+      const pbY = b.y - (pbH - b.height) / 2;
       out.push({
         type: 'playerBullet',
         x: b.x,
-        y: b.y,
+        y: pbY,
         width: b.width,
-        height: b.height,
+        height: pbH,
         color: COLORS.entityPlayerBullet,
         opacity: 1.0,
-        path: buildPath('playerBullet', b.x, b.y, b.width, b.height, scale),
-        glowPath: buildGlowPath('playerBullet', b.x, b.y, b.width, b.height, scale),
+        path: buildPath('playerBullet', b.x, pbY, b.width, pbH, scale),
+        glowPath: buildGlowPath('playerBullet', b.x, pbY, b.width, pbH, scale),
         glowColor: toGlowColor(COLORS.entityPlayerBullet),
         blendMode: 'screen',
       });
     }
 
-    // Enemy bullets
+    // Enemy bullets — A3: stretch + depth scale
     for (const b of entities.enemyBullets) {
       if (!b.active) continue;
+      const ebStretch = Math.min(BULLET_STRETCH_MAX, 1 + b.speed / BULLET_STRETCH_DIVISOR);
       const bds = computeDepthScale(b.y, visibleHeight);
       const bw = b.width * bds;
-      const bh = b.height * bds;
+      const bh = b.height * bds * ebStretch;
       const bx = b.x + (b.width - bw) / 2;
-      const by = b.y + (b.height - bh) / 2;
+      const by = b.y + (b.height * bds - bh) / 2;
       out.push({
         type: 'enemyBullet',
         x: bx,
@@ -320,6 +346,8 @@ export function createSyncRenderSystem(
     if (entities.boss?.active) {
       const boss = entities.boss;
       if (boss.laserState === 'warning') {
+        // A1: pulsing warning opacity
+        const warningOpacity = 0.3 + Math.sin(entities.stageTime * LASER_WARNING_PULSE_SPEED) * 0.15;
         out.push({
           type: 'laserWarning',
           x: boss.laserX - BOSS_LASER_WIDTH / 2,
@@ -327,7 +355,7 @@ export function createSyncRenderSystem(
           width: BOSS_LASER_WIDTH,
           height: visibleHeight,
           color: '#FF004488',
-          opacity: 0.3,
+          opacity: warningOpacity,
         });
       } else if (boss.laserState === 'firing') {
         out.push({
@@ -439,7 +467,7 @@ export function createSyncRenderSystem(
       });
     }
 
-    // Screen overlays — danger (C2), boss phase (E1), awakened (E2)
+    // Screen overlays — danger (C2), boss phase (E1), awakened (E2), gate flash (B1), EX flash (B3)
     const store = useGameSessionStore.getState();
     const hpRatio = store.maxHp > 0 ? store.hp / store.maxHp : 1;
     const dangerOpacity = (hpRatio < DANGER_HP_THRESHOLD && hpRatio > 0 && entities.player.active)
@@ -447,7 +475,13 @@ export function createSyncRenderSystem(
       : 0;
     const bossPhaseOpacity = entities.isBossPhase ? 0.06 : 0;
     const awakenedOpacity = store.isAwakened ? 0.08 + Math.sin(entities.stageTime * 4) * 0.04 : 0;
-    overlayState.value = { dangerOpacity, bossPhaseOpacity, awakenedOpacity };
+    const gateFlashOpacity = entities.gateFlashTimer > 0 ? entities.gateFlashTimer / GATE_FLASH_DURATION * 0.25 : 0;
+    const exFlashOpacity = exFlashTimer > 0 ? exFlashTimer / EX_FULL_FLASH_DURATION * 0.2 : 0;
+    overlayState.value = {
+      dangerOpacity, bossPhaseOpacity, awakenedOpacity,
+      gateFlashOpacity, gateFlashColor: entities.gateFlashColor,
+      exFlashOpacity,
+    };
 
     // Reanimated freezes objects assigned to SharedValue — pass copies to keep out/popups mutable
     renderData.value = out.slice();

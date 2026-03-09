@@ -61,7 +61,7 @@ export default function GameScreen() {
   const renderData = useSharedValue<RenderEntity[]>([]);
   const popupData = useSharedValue<PopupRenderData[]>([]);
   const scrollYShared = useSharedValue(0);
-  const overlayState = useSharedValue<OverlayState>({ dangerOpacity: 0, bossPhaseOpacity: 0, awakenedOpacity: 0 });
+  const overlayState = useSharedValue<OverlayState>({ dangerOpacity: 0, bossPhaseOpacity: 0, awakenedOpacity: 0, gateFlashOpacity: 0, gateFlashColor: '#FFFFFF', exFlashOpacity: 0 });
 
   // Reset session store
   useEffect(() => {

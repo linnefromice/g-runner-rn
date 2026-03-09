@@ -3,8 +3,8 @@ import type { GameEntities } from '@/types/entities';
 import { checkAABBOverlap, getPlayerHitbox } from '@/engine/collision';
 import { deactivateGate, generateGateLabel } from '@/engine/entities/Gate';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
-import { SCORE, EX_GAIN, TRANSFORM_GAIN_GATE_PASS, ROULETTE_INTERVAL, FORM_XP_GATE_ENHANCE } from '@/constants/balance';
-import { onGatePass } from '@/engine/effects';
+import { SCORE, EX_GAIN, TRANSFORM_GAIN_GATE_PASS, ROULETTE_INTERVAL, FORM_XP_GATE_ENHANCE, COMBO_THRESHOLD, GATE_FLASH_DURATION } from '@/constants/balance';
+import { onGatePass, onComboMax } from '@/engine/effects';
 import { GATE_COLORS } from '@/constants/colors';
 
 export const gateSystem: GameSystem<GameEntities> = (entities, { time }) => {
@@ -61,6 +61,8 @@ export const gateSystem: GameSystem<GameEntities> = (entities, { time }) => {
     store.addTransformGauge(TRANSFORM_GAIN_GATE_PASS);
 
     // Combo tracking (§10.2)
+    // B2: check before increment — incrementCombo resets count on awakened trigger
+    const willReachComboMax = store.comboCount === COMBO_THRESHOLD - 1;
     switch (gate.gateType) {
       case 'enhance':
         store.incrementCombo();
@@ -88,6 +90,15 @@ export const gateSystem: GameSystem<GameEntities> = (entities, { time }) => {
     const cx = gate.x + gate.width / 2;
     const cy = gate.y + gate.height / 2;
     onGatePass(entities, cx, cy, gateColor);
+
+    // B1: gate pass screen flash
+    entities.gateFlashTimer = GATE_FLASH_DURATION;
+    entities.gateFlashColor = gateColor;
+
+    // B2: combo max particles (gold burst when combo threshold reached)
+    if (willReachComboMax && (gate.gateType === 'enhance' || gate.gateType === 'growth' || gate.gateType === 'roulette')) {
+      onComboMax(entities, player.x + player.width / 2, player.y + player.height / 2);
+    }
 
     // Deactivate after visual effect capture
     deactivateGate(gate);
