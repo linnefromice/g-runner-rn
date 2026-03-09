@@ -56,5 +56,7 @@ export function resolveFormSkills(formId: MechaFormId, skills: FormSkillChoice[]
     }
   }
 
+  // NOTE: aoeRadiusMul, pierceCountAdd, and passives are resolved here but their
+  // runtime application (e.g., modifying bullet behavior) is deferred to future phases.
   return result;
 }

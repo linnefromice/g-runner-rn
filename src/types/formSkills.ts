@@ -19,6 +19,7 @@ export type FormSkillPassiveId =
   | 'xp_on_crit'
   | 'omnidirectional'
   | 'heal_on_hit'
+  | 'weak_homing'
   | 'armor'
   | 'graze_expand'
   | 'critical_chance';

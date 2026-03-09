@@ -74,7 +74,7 @@ export const FORM_SKILL_TREE: FormSkillLevel[] = [
   {
     formId: 'SD_Scatter', level: 2,
     choiceA: { label: 'Close Range +40%', effect: { type: 'stat_multiply', stat: 'damage', value: 1.4 } },
-    choiceB: { label: 'Weak Homing', effect: { type: 'passive', id: 'heal_on_hit' } },
+    choiceB: { label: 'Weak Homing', effect: { type: 'passive', id: 'weak_homing' } },
   },
   {
     formId: 'SD_Scatter', level: 3,

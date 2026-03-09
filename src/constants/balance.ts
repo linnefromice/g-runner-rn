@@ -183,7 +183,6 @@ export const GRAZE_EXTREME_SCORE = 150;
 // --- Form XP ---
 export const FORM_XP_ENEMY_KILL = 5;
 export const FORM_XP_STRONG_ENEMY_KILL = 10;
-export const FORM_XP_BOSS_HIT = 2;
 export const FORM_XP_GRAZE = 3;
 export const FORM_XP_GRAZE_CLOSE = 6;
 export const FORM_XP_GRAZE_EXTREME = 15;
@@ -193,5 +192,3 @@ export const FORM_XP_LV2 = 150;
 export const FORM_XP_LV3 = 300;
 export const FORM_XP_THRESHOLDS = [FORM_XP_LV1, FORM_XP_LV2, FORM_XP_LV3];
 
-// --- Skill choice ---
-export const SKILL_CHOICE_TIMEOUT = 5000;

@@ -58,7 +58,7 @@ interface GameSessionState {
   isStageClear: boolean;
 
   // Form XP
-  formXP: Record<string, FormXPState>;
+  formXP: Partial<Record<MechaFormId, FormXPState>>;
   pendingSkillChoice: { formId: MechaFormId; level: number } | null;
 
   // Actions
@@ -90,7 +90,6 @@ interface GameSessionState {
   setPaused: (value: boolean) => void;
   addFormXP: (formId: MechaFormId, amount: number) => void;
   selectFormSkill: (formId: MechaFormId, level: number, choice: 'A' | 'B') => void;
-  dismissSkillChoice: () => void;
   resetSession: (stageId: number, formId?: MechaFormId, secondaryFormId?: MechaFormId) => void;
 }
 
@@ -270,8 +269,6 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
       pendingSkillChoice: null,
     };
   }),
-
-  dismissSkillChoice: () => set({ pendingSkillChoice: null }),
 
   resetSession: (stageId, formId, secondaryFormId) => {
     const { upgrades } = useSaveDataStore.getState();
