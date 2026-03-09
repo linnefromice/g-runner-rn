@@ -2,7 +2,7 @@ import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
 import type { RenderEntity } from '@/types/rendering';
 import type { SharedValue } from 'react-native-reanimated';
-import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH } from '@/constants/balance';
+import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY, GLOW_SCALE } from '@/constants/balance';
 import { COLORS, GATE_COLORS } from '@/constants/colors';
 import { getEntityPath } from '@/rendering/shapes';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
@@ -20,6 +20,18 @@ export type PopupSyncTarget = SharedValue<PopupRenderData[]>;
 
 function buildPath(type: string, x: number, y: number, w: number, h: number, scale: number): string | undefined {
   return getEntityPath(type, x * scale, y * scale, w * scale, h * scale) ?? undefined;
+}
+
+function buildGlowPath(type: string, x: number, y: number, w: number, h: number, scale: number): string | undefined {
+  const gw = w * GLOW_SCALE;
+  const gh = h * GLOW_SCALE;
+  const gx = x + (w - gw) / 2;
+  const gy = y + (h - gh) / 2;
+  return getEntityPath(type, gx * scale, gy * scale, gw * scale, gh * scale) ?? undefined;
+}
+
+function toGlowColor(hex: string): string {
+  return hex + '33';
 }
 
 function getHpBarColor(ratio: number): string {
@@ -54,14 +66,39 @@ export function createSyncRenderSystem(
       });
     }
 
-    // Player — form-specific shape
+    // Player trail + player rendering share these values
     const p = entities.player;
+    const playerType = p.active ? `player_${useGameSessionStore.getState().currentForm}` : '';
+
+    // Player trail (afterimage) — drawn behind player
+    if (p.active) {
+      for (let i = 0; i < TRAIL_HISTORY_SIZE; i++) {
+        const idx = (p.trailIndex - i - 1 + TRAIL_HISTORY_SIZE * 2) % TRAIL_HISTORY_SIZE;
+        const pos = p.trailHistory[idx];
+        const tdx = p.x - pos.x;
+        const tdy = p.y - pos.y;
+        if (tdx * tdx + tdy * tdy < 1) continue;
+        const age = i + 1;
+        const trailOpacity = TRAIL_BASE_OPACITY * Math.pow(TRAIL_OPACITY_DECAY, age - 1);
+        out.push({
+          type: playerType,
+          x: pos.x,
+          y: pos.y,
+          width: p.width,
+          height: p.height,
+          color: COLORS.entityPlayer,
+          opacity: trailOpacity,
+          path: buildPath(playerType, pos.x, pos.y, p.width, p.height, scale),
+        });
+      }
+    }
+
+    // Player — form-specific shape
     if (p.active) {
       let opacity = 1.0;
       if (p.isInvincible) {
         opacity = Math.floor(p.invincibleTimer / IFRAME_BLINK_INTERVAL) % 2 === 0 ? 0.3 : 1.0;
       }
-      const playerType = `player_${useGameSessionStore.getState().currentForm}`;
       out.push({
         type: playerType,
         x: p.x,
@@ -71,6 +108,8 @@ export function createSyncRenderSystem(
         color: COLORS.entityPlayer,
         opacity,
         path: buildPath(playerType, p.x, p.y, p.width, p.height, scale),
+        glowPath: buildGlowPath(playerType, p.x, p.y, p.width, p.height, scale),
+        glowColor: toGlowColor(COLORS.entityPlayer),
       });
     }
 
@@ -88,6 +127,8 @@ export function createSyncRenderSystem(
         color: enemyColor,
         opacity: 1.0,
         path: buildPath(enemyRenderType, e.x, e.y, e.width, e.height, scale),
+        glowPath: buildGlowPath(enemyRenderType, e.x, e.y, e.width, e.height, scale),
+        glowColor: toGlowColor(enemyColor),
         hpRatio: e.hp / e.maxHp,
         hpBarColor: getHpBarColor(e.hp / e.maxHp),
       });
@@ -123,6 +164,9 @@ export function createSyncRenderSystem(
         color: COLORS.entityPlayerBullet,
         opacity: 1.0,
         path: buildPath('playerBullet', b.x, b.y, b.width, b.height, scale),
+        glowPath: buildGlowPath('playerBullet', b.x, b.y, b.width, b.height, scale),
+        glowColor: toGlowColor(COLORS.entityPlayerBullet),
+        blendMode: 'screen',
       });
     }
 
@@ -138,6 +182,8 @@ export function createSyncRenderSystem(
         color: COLORS.entityEnemyBullet,
         opacity: 1.0,
         path: buildPath('enemyBullet', b.x, b.y, b.width, b.height, scale),
+        glowPath: buildGlowPath('enemyBullet', b.x, b.y, b.width, b.height, scale),
+        glowColor: toGlowColor(COLORS.entityEnemyBullet),
       });
     }
 
@@ -175,6 +221,8 @@ export function createSyncRenderSystem(
         color: COLORS.entityBoss,
         opacity: 1.0,
         path: buildPath('boss', b.x, b.y, b.width, b.height, scale),
+        glowPath: buildGlowPath('boss', b.x, b.y, b.width, b.height, scale),
+        glowColor: toGlowColor(COLORS.entityBoss),
       });
     }
 
@@ -189,6 +237,7 @@ export function createSyncRenderSystem(
         height: p.y,
         color: '#00E5FF',
         opacity: 0.35,
+        blendMode: 'screen',
       });
     }
 
@@ -214,6 +263,7 @@ export function createSyncRenderSystem(
           height: entities.screen.visibleHeight,
           color: '#FF0044',
           opacity: 0.7,
+          blendMode: 'screen',
         });
       }
     }
@@ -236,6 +286,7 @@ export function createSyncRenderSystem(
         color: COLORS.white,
         opacity: opacity * 0.5,
         path: buildPath('shockwave', swX, swY, swSize, swSize, scale),
+        blendMode: 'screen',
       });
     }
 
@@ -254,6 +305,7 @@ export function createSyncRenderSystem(
         color: pt.color,
         opacity,
         path: buildPath('particle', px, py, pt.size, pt.size, scale),
+        blendMode: 'screen',
       });
     }
 
