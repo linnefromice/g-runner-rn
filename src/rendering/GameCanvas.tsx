@@ -15,7 +15,7 @@ import { useDerivedValue, useSharedValue } from 'react-native-reanimated';
 import { COLORS } from '@/constants/colors';
 import type { RenderEntity } from '@/types/rendering';
 import type { PopupRenderData } from '@/engine/systems/SyncRenderSystem';
-import { SCANLINE_PITCH, SCANLINE_OPACITY, SCORE_POPUP_FONT_SIZE } from '@/constants/balance';
+import { SCANLINE_PITCH, SCANLINE_OPACITY, SCORE_POPUP_FONT_SIZE, GRID_PITCH_MIN, GRID_PITCH_MAX } from '@/constants/balance';
 export type { RenderEntity };
 
 type GameCanvasProps = {
@@ -290,24 +290,23 @@ function StarDot({ star, scrollY, height }: { star: Star; scrollY: GameCanvasPro
 }
 
 function GridHLine({
-  index,
-  spacing,
+  baseOffset,
+  totalCycleHeight,
   scrollY,
   scale,
   width,
   height,
 }: {
-  index: number;
-  spacing: number;
+  baseOffset: number;
+  totalCycleHeight: number;
   scrollY: GameCanvasProps['scrollY'];
   scale: number;
   width: number;
   height: number;
 }) {
   const y = useDerivedValue(
-    () => ((scrollY.value * scale + index * spacing) % (spacing * (Math.ceil(height / spacing) + 1))) - spacing
+    () => ((scrollY.value * scale + baseOffset) % totalCycleHeight) - totalCycleHeight * 0.1
   );
-  // Perspective: compute opacity inline from y position (avoids extra useDerivedValue)
   const gridOpacity = useDerivedValue(() => {
     const ratio = y.value / height;
     return 0.15 + Math.max(0, Math.min(1, ratio)) * 0.4;
@@ -348,15 +347,29 @@ function GameCanvasInner({ renderData, popupData, scrollY, scale }: GameCanvasPr
   );
 
   // Grid lines — horizontal lines scroll with the background, vertical lines are fixed
-  const GRID_H_SPACING = 80 * scale;
+  const GRID_BASE_SPACING = 80 * scale;
   const GRID_V_SPACING = 80 * scale;
-  const GRID_H_COUNT = Math.ceil(height / GRID_H_SPACING) + 1;
   const GRID_V_COUNT = Math.ceil(width / GRID_V_SPACING) + 1;
 
-  const gridHSlots = React.useMemo(
-    () => Array.from({ length: GRID_H_COUNT }, (_, i) => i),
-    [GRID_H_COUNT]
-  );
+  // Pre-compute grid line offsets with variable spacing (dense at top → sparse at bottom)
+  const gridHLines = React.useMemo(() => {
+    const lines: { baseOffset: number }[] = [];
+    let y = 0;
+    const totalHeight = height * 1.2; // extra buffer for scroll wrapping
+    while (y < totalHeight) {
+      lines.push({ baseOffset: y });
+      const ratio = y / totalHeight;
+      const pitchMultiplier = GRID_PITCH_MIN + (GRID_PITCH_MAX - GRID_PITCH_MIN) * ratio;
+      y += GRID_BASE_SPACING * pitchMultiplier;
+    }
+    return lines;
+  }, [height, GRID_BASE_SPACING]);
+
+  const totalCycleHeight = React.useMemo(() => {
+    if (gridHLines.length === 0) return height;
+    return gridHLines[gridHLines.length - 1].baseOffset + GRID_BASE_SPACING * GRID_PITCH_MAX;
+  }, [gridHLines, height, GRID_BASE_SPACING]);
+
   const gridVSlots = React.useMemo(
     () => Array.from({ length: GRID_V_COUNT }, (_, i) => i),
     [GRID_V_COUNT]
@@ -373,8 +386,16 @@ function GameCanvasInner({ renderData, popupData, scrollY, scale }: GameCanvasPr
         <Rect key={`gv${i}`} x={i * GRID_V_SPACING} y={0} width={1} height={height} color="#2a2a4e" opacity={0.3} />
       ))}
       {/* Grid: horizontal lines (scroll with background) */}
-      {gridHSlots.map((i) => (
-        <GridHLine key={`gh${i}`} index={i} spacing={GRID_H_SPACING} scrollY={scrollY} scale={scale} width={width} height={height} />
+      {gridHLines.map((line, i) => (
+        <GridHLine
+          key={`gh${i}`}
+          baseOffset={line.baseOffset}
+          totalCycleHeight={totalCycleHeight}
+          scrollY={scrollY}
+          scale={scale}
+          width={width}
+          height={height}
+        />
       ))}
 
       {/* All entities via pre-allocated slots */}

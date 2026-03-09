@@ -206,3 +206,10 @@ export const GLOW_SCALE = 1.4;
 export const SCANLINE_PITCH = 2;
 export const SCANLINE_OPACITY = 0.04;
 
+/** 2.5D Depth scale */
+export const DEPTH_SCALE_MIN = 0.75;
+
+/** 2.5D Grid spacing gradient */
+export const GRID_PITCH_MIN = 0.6;
+export const GRID_PITCH_MAX = 1.4;
+
