@@ -237,3 +237,10 @@ export const PARTICLE_KILL_FLASH_SIZE = 8;
 export const GRAZE_RING_RADIUS = 25;
 export const GRAZE_RING_DURATION = 150;
 
+/** Score popup color tiers (A1) */
+export const SCORE_POPUP_THRESHOLD_MEDIUM = 100;
+export const SCORE_POPUP_THRESHOLD_LARGE = 300;
+
+/** Spawn scale-in (A3) — initial scale factor during fade-in */
+export const SPAWN_SCALE_MIN = 0.5;
+

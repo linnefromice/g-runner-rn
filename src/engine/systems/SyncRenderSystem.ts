@@ -2,8 +2,8 @@ import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
 import type { RenderEntity } from '@/types/rendering';
 import type { SharedValue } from 'react-native-reanimated';
-import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY, GLOW_SCALE, DEPTH_SCALE_MIN, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SPAWN_FADE_DURATION, DANGER_HP_THRESHOLD, DANGER_PULSE_SPEED, BOSS_COLOR_SHIFT_THRESHOLD, GRAZE_RING_RADIUS, GRAZE_RING_DURATION } from '@/constants/balance';
-import { COLORS, GATE_COLORS, ENEMY_TYPE_COLORS } from '@/constants/colors';
+import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY, GLOW_SCALE, DEPTH_SCALE_MIN, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SPAWN_FADE_DURATION, DANGER_HP_THRESHOLD, DANGER_PULSE_SPEED, BOSS_COLOR_SHIFT_THRESHOLD, GRAZE_RING_RADIUS, GRAZE_RING_DURATION, SPAWN_SCALE_MIN } from '@/constants/balance';
+import { COLORS, GATE_COLORS, ENEMY_TYPE_COLORS, BOSS_PHASE_COLORS } from '@/constants/colors';
 import { getEntityPath } from '@/rendering/shapes';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
 
@@ -153,7 +153,10 @@ export function createSyncRenderSystem(
       const enemyRenderType = `enemy_${e.enemyType}`;
       const enemyBaseColor = ENEMY_TYPE_COLORS[e.enemyType] ?? COLORS.entityEnemy;
       const enemyColor = e.flashTimer > 0 ? '#FF6644' : enemyBaseColor;
-      const ds = computeDepthScale(e.y, visibleHeight);
+      // A3: spawn scale-in — grow from SPAWN_SCALE_MIN to 1.0 during fade-in
+      const spawnProgress = Math.min(1, (entities.stageTime - e.spawnTime) / SPAWN_FADE_DURATION);
+      const spawnScale = SPAWN_SCALE_MIN + (1 - SPAWN_SCALE_MIN) * spawnProgress;
+      const ds = computeDepthScale(e.y, visibleHeight) * spawnScale;
       const ew = e.width * ds;
       const eh = e.height * ds;
       const ex = e.x + (e.width - ew) / 2;
@@ -180,7 +183,10 @@ export function createSyncRenderSystem(
     for (const d of entities.debris) {
       if (!d.active) continue;
       const dRatio = d.hp / d.maxHp;
-      const dds = computeDepthScale(d.y, visibleHeight);
+      // A3: spawn scale-in
+      const dSpawnProgress = Math.min(1, (entities.stageTime - d.spawnTime) / SPAWN_FADE_DURATION);
+      const dSpawnScale = SPAWN_SCALE_MIN + (1 - SPAWN_SCALE_MIN) * dSpawnProgress;
+      const dds = computeDepthScale(d.y, visibleHeight) * dSpawnScale;
       const dw = d.width * dds;
       const dh = d.height * dds;
       const dx = d.x + (d.width - dw) / 2;
@@ -270,14 +276,15 @@ export function createSyncRenderSystem(
       });
     }
 
-    // Boss — color shifts toward orange as HP decreases below threshold (D1)
+    // Boss — phase-specific base color (A2) + HP-based color shift (D1)
     if (entities.boss?.active) {
       const b = entities.boss;
       const bossHpRatio = b.hp / b.maxHp;
-      let bossColor: string = COLORS.entityBoss;
+      const bossBaseColor = BOSS_PHASE_COLORS[b.phase] ?? COLORS.entityBoss;
+      let bossColor: string = bossBaseColor;
       if (bossHpRatio < BOSS_COLOR_SHIFT_THRESHOLD) {
         const t = 1 - bossHpRatio / BOSS_COLOR_SHIFT_THRESHOLD;
-        bossColor = lerpColor(COLORS.entityBoss, '#FF8800', t);
+        bossColor = lerpColor(bossBaseColor, '#FF8800', t);
       }
       out.push({
         type: 'boss',
