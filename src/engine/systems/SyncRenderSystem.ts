@@ -2,7 +2,7 @@ import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
 import type { RenderEntity } from '@/types/rendering';
 import type { SharedValue } from 'react-native-reanimated';
-import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY, GLOW_SCALE } from '@/constants/balance';
+import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY, GLOW_SCALE, DEPTH_SCALE_MIN } from '@/constants/balance';
 import { COLORS, GATE_COLORS } from '@/constants/colors';
 import { getEntityPath } from '@/rendering/shapes';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
@@ -40,6 +40,11 @@ function getHpBarColor(ratio: number): string {
   return '#FF3366';
 }
 
+function computeDepthScale(y: number, visibleHeight: number): number {
+  const ratio = Math.max(0, Math.min(1, y / visibleHeight));
+  return DEPTH_SCALE_MIN + (1 - DEPTH_SCALE_MIN) * ratio;
+}
+
 export function createSyncRenderSystem(
   renderData: RenderSyncTarget,
   popupData: PopupSyncTarget,
@@ -53,6 +58,8 @@ export function createSyncRenderSystem(
     out.length = 0;
     popups.length = 0;
 
+    const visibleHeight = entities.screen.visibleHeight;
+
     // Boost Lane (background overlay) — no path, rect-based
     if (entities.boostLane?.active) {
       out.push({
@@ -60,7 +67,7 @@ export function createSyncRenderSystem(
         x: entities.boostLane.x,
         y: 0,
         width: entities.boostLane.width,
-        height: entities.screen.visibleHeight,
+        height: visibleHeight,
         color: '#FFD60033',
         opacity: 1.0,
       });
@@ -118,19 +125,25 @@ export function createSyncRenderSystem(
       if (!e.active) continue;
       const enemyRenderType = `enemy_${e.enemyType}`;
       const enemyColor = e.flashTimer > 0 ? '#FF6644' : COLORS.entityEnemy;
+      const ds = computeDepthScale(e.y, visibleHeight);
+      const ew = e.width * ds;
+      const eh = e.height * ds;
+      const ex = e.x + (e.width - ew) / 2;
+      const ey = e.y + (e.height - eh) / 2;
       out.push({
         type: enemyRenderType,
-        x: e.x,
-        y: e.y,
-        width: e.width,
-        height: e.height,
+        x: ex,
+        y: ey,
+        width: ew,
+        height: eh,
         color: enemyColor,
         opacity: 1.0,
-        path: buildPath(enemyRenderType, e.x, e.y, e.width, e.height, scale),
-        glowPath: buildGlowPath(enemyRenderType, e.x, e.y, e.width, e.height, scale),
+        path: buildPath(enemyRenderType, ex, ey, ew, eh, scale),
+        glowPath: buildGlowPath(enemyRenderType, ex, ey, ew, eh, scale),
         glowColor: toGlowColor(enemyColor),
         hpRatio: e.hp / e.maxHp,
         hpBarColor: getHpBarColor(e.hp / e.maxHp),
+        depthScale: ds,
       });
     }
 
@@ -138,17 +151,23 @@ export function createSyncRenderSystem(
     for (const d of entities.debris) {
       if (!d.active) continue;
       const dRatio = d.hp / d.maxHp;
+      const dds = computeDepthScale(d.y, visibleHeight);
+      const dw = d.width * dds;
+      const dh = d.height * dds;
+      const dx = d.x + (d.width - dw) / 2;
+      const dy = d.y + (d.height - dh) / 2;
       out.push({
         type: 'debris',
-        x: d.x,
-        y: d.y,
-        width: d.width,
-        height: d.height,
+        x: dx,
+        y: dy,
+        width: dw,
+        height: dh,
         color: COLORS.entityDebris,
         opacity: 1.0,
-        path: buildPath('debris', d.x, d.y, d.width, d.height, scale),
+        path: buildPath('debris', dx, dy, dw, dh, scale),
         hpRatio: dRatio,
         hpBarColor: getHpBarColor(dRatio),
+        depthScale: dds,
       });
     }
 
@@ -173,17 +192,23 @@ export function createSyncRenderSystem(
     // Enemy bullets
     for (const b of entities.enemyBullets) {
       if (!b.active) continue;
+      const bds = computeDepthScale(b.y, visibleHeight);
+      const bw = b.width * bds;
+      const bh = b.height * bds;
+      const bx = b.x + (b.width - bw) / 2;
+      const by = b.y + (b.height - bh) / 2;
       out.push({
         type: 'enemyBullet',
-        x: b.x,
-        y: b.y,
-        width: b.width,
-        height: b.height,
+        x: bx,
+        y: by,
+        width: bw,
+        height: bh,
         color: COLORS.entityEnemyBullet,
         opacity: 1.0,
-        path: buildPath('enemyBullet', b.x, b.y, b.width, b.height, scale),
-        glowPath: buildGlowPath('enemyBullet', b.x, b.y, b.width, b.height, scale),
+        path: buildPath('enemyBullet', bx, by, bw, bh, scale),
+        glowPath: buildGlowPath('enemyBullet', bx, by, bw, bh, scale),
         glowColor: toGlowColor(COLORS.entityEnemyBullet),
+        depthScale: bds,
       });
     }
 
@@ -196,16 +221,22 @@ export function createSyncRenderSystem(
         const currentValue = g.effects[0]?.kind !== 'refit' ? Math.abs(g.effects[0]?.value ?? 0) : 0;
         gateProgress = Math.min(1, currentValue / g.growthMax);
       }
+      const gds = computeDepthScale(g.y, visibleHeight);
+      const gw = g.width * gds;
+      const gh = g.height * gds;
+      const gx = g.x + (g.width - gw) / 2;
+      const gy = g.y + (g.height - gh) / 2;
       out.push({
         type: 'gate',
-        x: g.x,
-        y: g.y,
-        width: g.width,
-        height: g.height,
+        x: gx,
+        y: gy,
+        width: gw,
+        height: gh,
         color: GATE_COLORS[g.gateType],
         opacity: 1.0,
         label: g.displayLabel,
         gateProgress,
+        depthScale: gds,
       });
     }
 
@@ -250,7 +281,7 @@ export function createSyncRenderSystem(
           x: boss.laserX - BOSS_LASER_WIDTH / 2,
           y: boss.y + boss.height,
           width: BOSS_LASER_WIDTH,
-          height: entities.screen.visibleHeight,
+          height: visibleHeight,
           color: '#FF004488',
           opacity: 0.3,
         });
@@ -260,7 +291,7 @@ export function createSyncRenderSystem(
           x: boss.laserX - BOSS_LASER_WIDTH / 2,
           y: boss.y + boss.height,
           width: BOSS_LASER_WIDTH,
-          height: entities.screen.visibleHeight,
+          height: visibleHeight,
           color: '#FF0044',
           opacity: 0.7,
           blendMode: 'screen',
