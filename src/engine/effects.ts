@@ -39,9 +39,19 @@ import {
   PARTICLE_KILL_FLASH_LIFE,
   PARTICLE_KILL_FLASH_SIZE,
   GRAZE_RING_DURATION,
+  SCORE_POPUP_THRESHOLD_MEDIUM,
+  SCORE_POPUP_THRESHOLD_LARGE,
 } from '@/constants/balance';
+import { SCORE_POPUP_COLORS } from '@/constants/colors';
 
 export type GrazeTier = 'normal' | 'close' | 'extreme';
+
+/** Pick popup color based on score magnitude (A1) */
+function getScorePopupColor(score: number): string {
+  if (score >= SCORE_POPUP_THRESHOLD_LARGE) return SCORE_POPUP_COLORS.large;
+  if (score >= SCORE_POPUP_THRESHOLD_MEDIUM) return SCORE_POPUP_COLORS.medium;
+  return SCORE_POPUP_COLORS.small;
+}
 
 // --- Low-level spawners ---
 
@@ -134,7 +144,7 @@ export function onEnemyKill(entities: GameEntities, x: number, y: number, score:
   // White flash burst: large, very brief particles for impact feel (F1)
   spawnParticles(entities, x, y, PARTICLE_KILL_FLASH_COUNT, '#FFFFFF', PARTICLE_KILL_FLASH_LIFE, PARTICLE_DEFAULT_SPEED * 0.5, PARTICLE_KILL_FLASH_SIZE);
   spawnParticles(entities, x, y, PARTICLE_ENEMY_KILL_COUNT, '#FF4444');
-  spawnScorePopup(entities, x, y, `+${score}`, '#FFD600');
+  spawnScorePopup(entities, x, y, `+${score}`, getScorePopupColor(score));
 }
 
 export function onPlayerHit(entities: GameEntities, x: number, y: number) {

@@ -43,6 +43,20 @@ export const GATE_COLORS: Record<GateType, string> = {
   roulette: COLORS.gateRoulette,
 };
 
+/** Boss phase-specific base colors (A2) */
+export const BOSS_PHASE_COLORS: Record<string, string> = {
+  spread: '#FF0044',   // red — base attack phase
+  laser: '#8844FF',    // purple — laser phase
+  all: '#FF4400',      // orange-red — enraged/final phase
+};
+
+/** Score popup color tiers (A1): small → white, medium → yellow, large → pink */
+export const SCORE_POPUP_COLORS = {
+  small: '#FFFFFF',
+  medium: '#FFD600',
+  large: '#FF69B4',
+} as const;
+
 /** Per-enemy-type colors for glow differentiation (D2) */
 export const ENEMY_TYPE_COLORS: Record<EnemyType, string> = {
   stationary: '#FF3366',  // pink (same as base)
