@@ -2,7 +2,7 @@ import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
 import type { RenderEntity } from '@/types/rendering';
 import type { SharedValue } from 'react-native-reanimated';
-import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY, GLOW_SCALE, DEPTH_SCALE_MIN, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SPAWN_FADE_DURATION, DANGER_HP_THRESHOLD, DANGER_PULSE_SPEED, BOSS_COLOR_SHIFT_THRESHOLD, GRAZE_RING_RADIUS, GRAZE_RING_DURATION, SPAWN_SCALE_MIN, LASER_WARNING_PULSE_SPEED, BULLET_STRETCH_DIVISOR, BULLET_STRETCH_MAX, GATE_FLASH_DURATION, EX_FULL_FLASH_DURATION, EX_GAUGE_MAX } from '@/constants/balance';
+import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, BOSS_3_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY, GLOW_SCALE, DEPTH_SCALE_MIN, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SPAWN_FADE_DURATION, DANGER_HP_THRESHOLD, DANGER_PULSE_SPEED, BOSS_COLOR_SHIFT_THRESHOLD, GRAZE_RING_RADIUS, GRAZE_RING_DURATION, SPAWN_SCALE_MIN, LASER_WARNING_PULSE_SPEED, BULLET_STRETCH_DIVISOR, BULLET_STRETCH_MAX, GATE_FLASH_DURATION, EX_FULL_FLASH_DURATION, EX_GAUGE_MAX } from '@/constants/balance';
 import { COLORS, GATE_COLORS, ENEMY_TYPE_COLORS, BOSS_PHASE_COLORS } from '@/constants/colors';
 import { getEntityPath } from '@/rendering/shapes';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
@@ -345,14 +345,15 @@ export function createSyncRenderSystem(
     // Boss laser beam
     if (entities.boss?.active) {
       const boss = entities.boss;
+      const laserW = boss.bossIndex >= 3 ? BOSS_3_LASER_WIDTH : BOSS_LASER_WIDTH;
       if (boss.laserState === 'warning') {
         // A1: pulsing warning opacity
         const warningOpacity = 0.3 + Math.sin(entities.stageTime * LASER_WARNING_PULSE_SPEED) * 0.15;
         out.push({
           type: 'laserWarning',
-          x: boss.laserX - BOSS_LASER_WIDTH / 2,
+          x: boss.laserX - laserW / 2,
           y: boss.y + boss.height,
-          width: BOSS_LASER_WIDTH,
+          width: laserW,
           height: visibleHeight,
           color: '#FF004488',
           opacity: warningOpacity,
@@ -360,9 +361,9 @@ export function createSyncRenderSystem(
       } else if (boss.laserState === 'firing') {
         out.push({
           type: 'laserBeam',
-          x: boss.laserX - BOSS_LASER_WIDTH / 2,
+          x: boss.laserX - laserW / 2,
           y: boss.y + boss.height,
-          width: BOSS_LASER_WIDTH,
+          width: laserW,
           height: visibleHeight,
           color: '#FF0044',
           opacity: 0.7,

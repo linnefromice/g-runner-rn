@@ -17,9 +17,11 @@ import {
   BOSS_LASER_WARNING_DURATION,
   BOSS_LASER_FIRE_DURATION,
   BOSS_LASER_WIDTH,
+  BOSS_3_LASER_WIDTH,
   BOSS_LASER_DAMAGE,
   BOSS_LASER_TICK_INTERVAL,
   BOSS_LASER_COOLDOWN,
+  BOSS_3_HOMING_COUNT,
   IFRAME_DURATION,
 } from '@/constants/balance';
 import { LOGICAL_WIDTH } from '@/constants/dimensions';
@@ -65,8 +67,9 @@ export function createBossSystem(): GameSystem<GameEntities> {
           boss.laserTickTimer -= BOSS_LASER_TICK_INTERVAL;
           const player = entities.player;
           if (player.active && !player.isInvincible) {
+            const laserWidth = boss.bossIndex >= 3 ? BOSS_3_LASER_WIDTH : BOSS_LASER_WIDTH;
             const playerCenterX = player.x + player.width / 2;
-            if (Math.abs(playerCenterX - boss.laserX) <= BOSS_LASER_WIDTH / 2) {
+            if (Math.abs(playerCenterX - boss.laserX) <= laserWidth / 2) {
               applyLaserDamage(entities, player, BOSS_LASER_DAMAGE);
             }
           }
@@ -127,9 +130,14 @@ export function createBossSystem(): GameSystem<GameEntities> {
 function fireSpreadShot(entities: GameEntities, boss: NonNullable<GameEntities['boss']>) {
   const bCenterX = boss.x + boss.width / 2;
   const startY = boss.y + boss.height;
+  // Boss 3+: mark the outermost bullets as homing
+  const homingCount = boss.bossIndex >= 3 ? BOSS_3_HOMING_COUNT : 0;
+  const mid = Math.floor(BOSS_SPREAD_COUNT / 2);
   for (let i = 0; i < BOSS_SPREAD_COUNT; i++) {
-    const angle = ((i - Math.floor(BOSS_SPREAD_COUNT / 2)) * BOSS_SPREAD_ANGLE * Math.PI) / 180;
-    const bullet = createEnemyBullet(bCenterX + Math.sin(angle) * 20, startY, BOSS_SPREAD_DAMAGE);
+    const angle = ((i - mid) * BOSS_SPREAD_ANGLE * Math.PI) / 180;
+    const distFromCenter = Math.abs(i - mid);
+    const isHoming = homingCount > 0 && distFromCenter >= mid - homingCount + 1 && distFromCenter > 0;
+    const bullet = createEnemyBullet(bCenterX + Math.sin(angle) * 20, startY, BOSS_SPREAD_DAMAGE, isHoming ? { homing: true } : undefined);
     if (!acquireFromPool(entities.enemyBullets, bullet)) break;
   }
 }
