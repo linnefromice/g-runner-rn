@@ -54,7 +54,7 @@ describe('effects', () => {
     expect(e.particles.filter(p => p.active).length).toBeGreaterThanOrEqual(16);
   });
 
-  test('onGraze spawns score popup only', () => {
+  test('onGraze normal tier spawns white particles and popup', () => {
     const e = createMockEntities() as GameEntities;
     onGraze(e, 100, 200);
 
@@ -63,6 +63,36 @@ describe('effects', () => {
     const popups = e.scorePopups.filter(p => p.active);
     expect(popups.length).toBe(1);
     expect(popups[0].text).toBe('+20');
+    expect(popups[0].color).toBe('#FFFFFF');
+    const particles = e.particles.filter(p => p.active);
+    expect(particles.length).toBe(3);
+    expect(particles[0].color).toBe('#FFFFFF');
+  });
+
+  test('onGraze close tier spawns yellow particles and popup', () => {
+    const e = createMockEntities() as GameEntities;
+    onGraze(e, 100, 200, 'close');
+
+    const popups = e.scorePopups.filter(p => p.active);
+    expect(popups.length).toBe(1);
+    expect(popups[0].text).toBe('+50');
+    expect(popups[0].color).toBe('#FFD600');
+    const particles = e.particles.filter(p => p.active);
+    expect(particles.length).toBe(4);
+    expect(particles[0].color).toBe('#FFD600');
+  });
+
+  test('onGraze extreme tier spawns red particles (2x) and popup', () => {
+    const e = createMockEntities() as GameEntities;
+    onGraze(e, 100, 200, 'extreme');
+
+    const popups = e.scorePopups.filter(p => p.active);
+    expect(popups.length).toBe(1);
+    expect(popups[0].text).toBe('+150');
+    expect(popups[0].color).toBe('#FF3366');
+    const particles = e.particles.filter(p => p.active);
+    expect(particles.length).toBe(8);
+    expect(particles[0].color).toBe('#FF3366');
   });
 
   test('onGatePass spawns horizontal particles', () => {

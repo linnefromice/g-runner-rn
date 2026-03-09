@@ -168,6 +168,9 @@ export const SCORE_POPUP_LIFE = 800;
 export const SCORE_POPUP_FONT_SIZE = 12;
 
 // --- Graze tiers ---
+export const PARTICLE_GRAZE_NORMAL_COUNT = 3;
+export const PARTICLE_GRAZE_CLOSE_COUNT = 4;
+export const PARTICLE_GRAZE_EXTREME_COUNT = 8;
 export const GRAZE_CLOSE_EXPAND = 4;
 export const GRAZE_EXTREME_EXPAND = 1;
 export const GRAZE_CLOSE_EX_GAIN = 6;

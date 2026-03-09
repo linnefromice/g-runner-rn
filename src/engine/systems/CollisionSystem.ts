@@ -9,7 +9,7 @@ import { updateBossPhase } from '@/engine/systems/bossPhase';
 import { applyEnemyKillReward } from '@/engine/systems/enemyKillReward';
 import { applyBossKill } from '@/engine/systems/bossKill';
 import { applyDebrisDestroyReward } from '@/engine/systems/debrisDestroyReward';
-import { onPlayerHit, onParry, onGraze, onBulletImpact } from '@/engine/effects';
+import { onPlayerHit, onParry, onGraze, onBulletImpact, type GrazeTier } from '@/engine/effects';
 
 type Store = ReturnType<typeof useGameSessionStore.getState>;
 
@@ -197,22 +197,26 @@ function checkGraze(
       let exGain: number;
       let tfGain: number;
       let xpGain: number;
+      let tier: GrazeTier;
 
       if (overlapExtreme) {
         score = GRAZE_EXTREME_SCORE;
         exGain = GRAZE_EXTREME_EX_GAIN;
         tfGain = GRAZE_EXTREME_TF_GAIN;
         xpGain = FORM_XP_GRAZE_EXTREME;
+        tier = 'extreme';
       } else if (overlapClose) {
         score = GRAZE_CLOSE_SCORE;
         exGain = GRAZE_CLOSE_EX_GAIN;
         tfGain = GRAZE_CLOSE_TF_GAIN;
         xpGain = FORM_XP_GRAZE_CLOSE;
+        tier = 'close';
       } else {
         score = GRAZE_SCORE;
         exGain = GRAZE_EX_GAIN;
         tfGain = GRAZE_TF_GAIN;
         xpGain = FORM_XP_GRAZE;
+        tier = 'normal';
       }
 
       store.addScore(score);
@@ -221,7 +225,7 @@ function checkGraze(
       store.addFormXP(store.currentForm, xpGain);
 
       const bc = getCenter(bullet);
-      onGraze(entities, bc.x, bc.y);
+      onGraze(entities, bc.x, bc.y, tier);
     }
   }
 }

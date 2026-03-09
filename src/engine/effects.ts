@@ -29,8 +29,15 @@ import {
   SHAKE_BOSS_KILL_DURATION,
   JUST_TF_SCORE,
   GRAZE_SCORE,
+  GRAZE_CLOSE_SCORE,
+  GRAZE_EXTREME_SCORE,
+  PARTICLE_GRAZE_NORMAL_COUNT,
+  PARTICLE_GRAZE_CLOSE_COUNT,
+  PARTICLE_GRAZE_EXTREME_COUNT,
   DEBRIS_DESTROY_SCORE,
 } from '@/constants/balance';
+
+export type GrazeTier = 'normal' | 'close' | 'extreme';
 
 // --- Low-level spawners ---
 
@@ -156,8 +163,31 @@ export function onBulletImpact(entities: GameEntities, x: number, y: number) {
   spawnParticles(entities, x, y, PARTICLE_BULLET_IMPACT_COUNT, '#00D4FF', PARTICLE_BULLET_IMPACT_LIFE);
 }
 
-export function onGraze(entities: GameEntities, x: number, y: number) {
-  spawnScorePopup(entities, x, y, `+${GRAZE_SCORE}`, '#00E5FF');
+export function onGraze(entities: GameEntities, x: number, y: number, tier: GrazeTier = 'normal') {
+  let color: string;
+  let particleCount: number;
+  let score: number;
+
+  switch (tier) {
+    case 'extreme':
+      color = '#FF3366';
+      particleCount = PARTICLE_GRAZE_EXTREME_COUNT;
+      score = GRAZE_EXTREME_SCORE;
+      break;
+    case 'close':
+      color = '#FFD600';
+      particleCount = PARTICLE_GRAZE_CLOSE_COUNT;
+      score = GRAZE_CLOSE_SCORE;
+      break;
+    default:
+      color = '#FFFFFF';
+      particleCount = PARTICLE_GRAZE_NORMAL_COUNT;
+      score = GRAZE_SCORE;
+      break;
+  }
+
+  spawnParticles(entities, x, y, particleCount, color);
+  spawnScorePopup(entities, x, y, `+${score}`, color);
 }
 
 export function onDebrisDestroy(entities: GameEntities, x: number, y: number) {
