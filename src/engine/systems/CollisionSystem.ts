@@ -7,6 +7,7 @@ import { acquireFromPool } from '@/engine/pool';
 import { IFRAME_DURATION, EXPLOSION_RADIUS, ENEMY_STATS, GRAZE_EX_GAIN, GRAZE_TF_GAIN, GRAZE_SCORE, DEBRIS_CONTACT_DAMAGE, GROWTH_GATE_INITIAL_RATIO, GROWTH_GATE_PER_HIT, JUST_TF_SHOCKWAVE_RADIUS, JUST_TF_SHOCKWAVE_DAMAGE, JUST_TF_SCORE, JUST_TF_EX_GAIN, SHOCKWAVE_EFFECT_DURATION, BOSS_COLLISION_DAMAGE, HIT_FLASH_DURATION, GRAZE_CLOSE_EXPAND, GRAZE_EXTREME_EXPAND, GRAZE_CLOSE_SCORE, GRAZE_CLOSE_EX_GAIN, GRAZE_CLOSE_TF_GAIN, GRAZE_EXTREME_SCORE, GRAZE_EXTREME_EX_GAIN, GRAZE_EXTREME_TF_GAIN, FORM_XP_GRAZE, FORM_XP_GRAZE_CLOSE, FORM_XP_GRAZE_EXTREME, SPLITTER_SPAWN_OFFSETS } from '@/constants/balance';
 import { generateGateLabel } from '@/engine/entities/Gate';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
+import { FORM_DEFINITIONS } from '@/game/forms';
 import { updateBossPhase } from '@/engine/systems/bossPhase';
 import { applyEnemyKillReward } from '@/engine/systems/enemyKillReward';
 import { applyBossKill } from '@/engine/systems/bossKill';
@@ -318,7 +319,11 @@ function applyDamage(
   damage: number,
   store: Store,
 ) {
-  store.takeDamage(damage);
+  // Check for damage_reduce ability
+  const formId = store.currentForm;
+  const form = FORM_DEFINITIONS[formId];
+  const finalDamage = form?.specialAbility === 'damage_reduce' ? Math.round(damage * 0.7) : damage;
+  store.takeDamage(finalDamage);
   player.isInvincible = true;
   player.invincibleTimer = IFRAME_DURATION;
   store.resetCombo();
