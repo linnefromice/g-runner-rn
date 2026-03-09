@@ -4,6 +4,8 @@ import type { MechaFormDefinition } from '@/types/forms';
 import { BASE_FIRE_INTERVAL } from '@/constants/balance';
 import { createPlayerBullet } from '@/engine/entities/Bullet';
 import { acquireFromPool } from '@/engine/pool';
+import { resolveFormSkills } from '@/engine/formSkillResolver';
+import { useGameSessionStore } from '@/stores/gameSessionStore';
 
 const SPREAD_ANGLE = 15; // degrees between spread bullets
 
@@ -12,7 +14,13 @@ export function createShootingSystem(getForm: () => MechaFormDefinition): GameSy
 
   return (entities, { time }) => {
     const form = getForm();
-    const interval = BASE_FIRE_INTERVAL / form.fireRateMultiplier;
+
+    // Resolve form skill multipliers (once per frame, not per bullet)
+    const store = useGameSessionStore.getState();
+    const formXPState = store.formXP[store.currentForm];
+    const skills = formXPState ? resolveFormSkills(store.currentForm, formXPState.skills) : null;
+
+    const interval = BASE_FIRE_INTERVAL / (form.fireRateMultiplier * (skills?.fireRateMul ?? 1));
 
     fireTimer += time.delta;
     if (fireTimer < interval) return;
@@ -22,18 +30,21 @@ export function createShootingSystem(getForm: () => MechaFormDefinition): GameSy
     if (!p.active) return;
 
     const bulletConfig = form.bulletConfig;
-    const damage = 10 * form.attackMultiplier;
+    const damage = 10 * form.attackMultiplier * (skills?.damageMul ?? 1);
     const isHoming = form.specialAbility === 'homing_invincible';
     const specialAbility = form.specialAbility;
-    const count = bulletConfig.count;
+    const bulletSpeed = bulletConfig.speed * (skills?.bulletSpeedMul ?? 1);
+    const bulletWidth = bulletConfig.width * (skills?.bulletSizeMul ?? 1);
+    const bulletHeight = bulletConfig.height * (skills?.bulletSizeMul ?? 1);
+    const count = bulletConfig.count + (skills?.bulletCountAdd ?? 0);
     const centerX = p.x + p.width / 2;
 
     if (count <= 1) {
       // Single bullet (original behavior)
       const bullet = createPlayerBullet(centerX, p.y, damage, {
-        width: bulletConfig.width,
-        height: bulletConfig.height,
-        speed: bulletConfig.speed,
+        width: bulletWidth,
+        height: bulletHeight,
+        speed: bulletSpeed,
         homing: isHoming,
         specialAbility,
       });
@@ -45,9 +56,9 @@ export function createShootingSystem(getForm: () => MechaFormDefinition): GameSy
         const angleDeg = -halfSpread + i * SPREAD_ANGLE;
         const offsetX = Math.tan((angleDeg * Math.PI) / 180) * 20;
         const bullet = createPlayerBullet(centerX + offsetX, p.y, damage, {
-          width: bulletConfig.width,
-          height: bulletConfig.height,
-          speed: bulletConfig.speed,
+          width: bulletWidth,
+          height: bulletHeight,
+          speed: bulletSpeed,
           homing: isHoming,
           specialAbility,
         });
