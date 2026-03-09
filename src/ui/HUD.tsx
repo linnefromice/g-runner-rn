@@ -6,6 +6,7 @@ import { COLORS } from '@/constants/colors';
 import { EX_GAUGE_MAX, COMBO_THRESHOLD, TRANSFORM_GAUGE_MAX } from '@/constants/balance';
 import { useTranslation } from '@/i18n';
 import type { GameEntities } from '@/types/entities';
+import { FormXPBar } from '@/ui/FormXPBar';
 import type { MechaFormId } from '@/types/forms';
 
 function HPBar() {
@@ -288,6 +289,7 @@ function HUDInner({ onPause, onEXBurst, onTransform, entitiesRef, stageDuration 
           </View>
           <ScoreDisplay />
         </View>
+        <FormXPBar />
       </View>
 
       {/* Bottom area: Form icon, Combo, EX */}

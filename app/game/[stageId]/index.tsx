@@ -8,6 +8,7 @@ import { GameCanvas, type RenderEntity } from '@/rendering/GameCanvas';
 import type { PopupRenderData } from '@/engine/systems/SyncRenderSystem';
 import { HUD } from '@/ui/HUD';
 import { PauseMenu } from '@/ui/PauseMenu';
+import { SkillChoiceOverlay } from '@/ui/SkillChoiceOverlay';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
 import { getStage } from '@/game/stages';
 import { getFormDefinition } from '@/game/forms';
@@ -109,7 +110,11 @@ export default function GameScreen() {
     createSyncRenderSystem(renderData, popupData, scrollYShared, scale),
   ]);
 
-  useGameLoop(systemsRef, entitiesRef, running);
+  // Pause game loop during skill choice overlay
+  const pendingChoice = useGameSessionStore((s) => s.pendingSkillChoice);
+  const effectiveRunning = running && pendingChoice === null;
+
+  useGameLoop(systemsRef, entitiesRef, effectiveRunning);
 
   // Auto-pause when app goes to background
   useEffect(() => {
@@ -200,6 +205,7 @@ export default function GameScreen() {
           entitiesRef={entitiesRef}
           stageDuration={stage.duration}
         />
+        <SkillChoiceOverlay />
         {showPauseMenu && (
           <PauseMenu onResume={handleResume} onExit={handleExit} />
         )}
