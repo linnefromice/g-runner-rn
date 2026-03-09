@@ -32,7 +32,7 @@ export function createEnemyBullet(
   x: number,
   y: number,
   damage: number,
-  config?: { speed?: number; vx?: number; vy?: number; waveAmplitude?: number }
+  config?: { speed?: number; vx?: number; vy?: number; waveAmplitude?: number; homing?: boolean }
 ): BulletEntity {
   return {
     id: `eb_${nextId++}`,
@@ -44,7 +44,7 @@ export function createEnemyBullet(
     active: true,
     damage,
     speed: config?.speed ?? ENEMY_BULLET_SPEED,
-    homing: false,
+    homing: config?.homing ?? false,
     vx: config?.vx,
     vy: config?.vy,
     waveAmplitude: config?.waveAmplitude,

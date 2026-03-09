@@ -2,9 +2,12 @@ import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
 import { checkAABBOverlap, getPlayerHitbox, getPlayerVisualHitbox, getCenter, getDistance, expandHitbox } from '@/engine/collision';
 import { deactivateBullet } from '@/engine/entities/Bullet';
-import { IFRAME_DURATION, EXPLOSION_RADIUS, ENEMY_STATS, GRAZE_EX_GAIN, GRAZE_TF_GAIN, GRAZE_SCORE, DEBRIS_CONTACT_DAMAGE, GROWTH_GATE_INITIAL_RATIO, GROWTH_GATE_PER_HIT, JUST_TF_SHOCKWAVE_RADIUS, JUST_TF_SHOCKWAVE_DAMAGE, JUST_TF_SCORE, JUST_TF_EX_GAIN, SHOCKWAVE_EFFECT_DURATION, BOSS_COLLISION_DAMAGE, HIT_FLASH_DURATION, GRAZE_CLOSE_EXPAND, GRAZE_EXTREME_EXPAND, GRAZE_CLOSE_SCORE, GRAZE_CLOSE_EX_GAIN, GRAZE_CLOSE_TF_GAIN, GRAZE_EXTREME_SCORE, GRAZE_EXTREME_EX_GAIN, GRAZE_EXTREME_TF_GAIN, FORM_XP_GRAZE, FORM_XP_GRAZE_CLOSE, FORM_XP_GRAZE_EXTREME } from '@/constants/balance';
+import { createEnemy } from '@/engine/entities/Enemy';
+import { acquireFromPool } from '@/engine/pool';
+import { IFRAME_DURATION, EXPLOSION_RADIUS, ENEMY_STATS, GRAZE_EX_GAIN, GRAZE_TF_GAIN, GRAZE_SCORE, DEBRIS_CONTACT_DAMAGE, GROWTH_GATE_INITIAL_RATIO, GROWTH_GATE_PER_HIT, JUST_TF_SHOCKWAVE_RADIUS, JUST_TF_SHOCKWAVE_DAMAGE, JUST_TF_SCORE, JUST_TF_EX_GAIN, SHOCKWAVE_EFFECT_DURATION, BOSS_COLLISION_DAMAGE, HIT_FLASH_DURATION, GRAZE_CLOSE_EXPAND, GRAZE_EXTREME_EXPAND, GRAZE_CLOSE_SCORE, GRAZE_CLOSE_EX_GAIN, GRAZE_CLOSE_TF_GAIN, GRAZE_EXTREME_SCORE, GRAZE_EXTREME_EX_GAIN, GRAZE_EXTREME_TF_GAIN, FORM_XP_GRAZE, FORM_XP_GRAZE_CLOSE, FORM_XP_GRAZE_EXTREME, SPLITTER_SPAWN_OFFSETS } from '@/constants/balance';
 import { generateGateLabel } from '@/engine/entities/Gate';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
+import { FORM_DEFINITIONS } from '@/game/forms';
 import { updateBossPhase } from '@/engine/systems/bossPhase';
 import { applyEnemyKillReward } from '@/engine/systems/enemyKillReward';
 import { applyBossKill } from '@/engine/systems/bossKill';
@@ -72,6 +75,16 @@ function checkPlayerBulletsVsEnemies(entities: GameEntities, store: Store) {
       }
 
       if (enemy.hp <= 0) {
+        // Splitter: spawn 3 swarms on death
+        if (enemy.enemyType === 'splitter') {
+          const cx = enemy.x + enemy.width / 2;
+          const cy = enemy.y + enemy.height / 2;
+          for (const offset of SPLITTER_SPAWN_OFFSETS) {
+            const sw = createEnemy('swarm', cx + offset, cy, 1.0);
+            sw.spawnTime = entities.stageTime;
+            acquireFromPool(entities.enemies, sw);
+          }
+        }
         applyEnemyKillReward(enemy, entities);
       } else if (bullet.specialAbility !== 'pierce') {
         onBulletImpact(entities, hit.x, hit.y);
@@ -306,7 +319,11 @@ function applyDamage(
   damage: number,
   store: Store,
 ) {
-  store.takeDamage(damage);
+  // Check for damage_reduce ability
+  const formId = store.currentForm;
+  const form = FORM_DEFINITIONS[formId];
+  const finalDamage = form?.specialAbility === 'damage_reduce' ? Math.round(damage * 0.7) : damage;
+  store.takeDamage(finalDamage);
   player.isInvincible = true;
   player.invincibleTimer = IFRAME_DURATION;
   store.resetCombo();

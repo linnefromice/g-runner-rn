@@ -19,6 +19,9 @@ export const ENEMY_STATS = {
   swarm:      { hp: 1,  attackDamage: 5,  attackInterval: 0,   scoreValue: 30,  creditValue: 0 },
   phalanx:    { hp: 60, attackDamage: 15, attackInterval: 2.0, scoreValue: 300, creditValue: 4 },
   juggernaut: { hp: 120, attackDamage: 25, attackInterval: 1.5, scoreValue: 500, creditValue: 7 },
+  dodger:    { hp: 35, attackDamage: 12, attackInterval: 1.8, scoreValue: 250, creditValue: 3 },
+  splitter:  { hp: 50, attackDamage: 8,  attackInterval: 2.0, scoreValue: 200, creditValue: 3 },
+  summoner:  { hp: 80, attackDamage: 0,  attackInterval: 0,   scoreValue: 400, creditValue: 5 },
 } as const;
 
 /** Scoring (§12.1) */
@@ -66,7 +69,7 @@ export const BOSS_SPREAD_DAMAGE = 15;
 export const BOSS_ATTACK_INTERVAL = 2.0;
 export const BOSS_COLLISION_DAMAGE = 50;
 export const BOSS_DRONE_COUNT = 3;
-export const BOSS_DRONE_COUNTS = { 1: 3, 2: 4 } as const;
+export const BOSS_DRONE_COUNTS = { 1: 3, 2: 4, 3: 5 } as const;
 export const BOSS_DRONE_HP_THRESHOLD = 0.25;
 export const BOSS_DRONE_OFFSET_Y = 20;
 export const BOSS_DRONE_HP_MULTIPLIER = 0.5;
@@ -259,4 +262,20 @@ export const EX_FULL_FLASH_DURATION = 150;
 
 /** Combo max particles (B2) */
 export const PARTICLE_COMBO_MAX_COUNT = 4;
+
+/** Dodger AI */
+export const DODGER_DETECT_RADIUS = 60;
+export const DODGER_SPEED = 120;
+export const DODGER_COOLDOWN = 0.8;
+
+/** Summoner AI */
+export const SUMMONER_INTERVAL = 3.0;
+export const SUMMONER_MAX_SPAWNS = 6;
+
+/** Splitter spawn offsets */
+export const SPLITTER_SPAWN_OFFSETS = [-20, 0, 20];
+
+/** Boss 3 */
+export const BOSS_3_LASER_WIDTH = 40;
+export const BOSS_3_HOMING_COUNT = 2;
 

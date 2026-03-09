@@ -65,4 +65,7 @@ export const ENEMY_TYPE_COLORS: Record<EnemyType, string> = {
   swarm: '#FF3366',       // pink (same as base)
   phalanx: '#4488FF',     // blue — shield/formation type
   juggernaut: '#AA44FF',  // purple — heavy/elite
+  dodger: '#44DDFF',
+  splitter: '#FF8800',
+  summoner: '#DDAA00',
 };

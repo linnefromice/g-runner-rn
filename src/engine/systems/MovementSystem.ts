@@ -94,7 +94,9 @@ export function createMovementSystem(
   // Move enemy bullets (directional or straight down, with optional sine-wave)
   for (const b of entities.enemyBullets) {
     if (!b.active) continue;
-    if (b.vx != null && b.vy != null) {
+    if (b.homing) {
+      moveHomingEnemyBullet(b, entities, dt);
+    } else if (b.vx != null && b.vy != null) {
       b.x += b.vx * dt;
       b.y += b.vy * dt;
     } else {
@@ -197,4 +199,33 @@ function findNearestTarget(
   }
 
   return nearest;
+}
+
+/** Enemy homing bullet — tracks player instead of enemies */
+function moveHomingEnemyBullet(
+  bullet: BulletEntity,
+  entities: GameEntities,
+  dt: number
+): void {
+  const player = entities.player;
+  if (!player.active) {
+    bullet.y += bullet.speed * dt;
+    return;
+  }
+
+  const dx = (player.x + player.width / 2) - (bullet.x + bullet.width / 2);
+  const dy = (player.y + player.height / 2) - (bullet.y + bullet.height / 2);
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist < 1) {
+    bullet.y += bullet.speed * dt;
+    return;
+  }
+
+  const homingStrength = Math.min(1.0, HOMING_TURN_RATE * dt);
+  const moveX = (dx / dist) * bullet.speed * dt;
+  const moveY = (dy / dist) * bullet.speed * dt;
+
+  bullet.x += moveX * homingStrength;
+  bullet.y += moveY * homingStrength + (bullet.speed * dt) * (1 - homingStrength);
 }

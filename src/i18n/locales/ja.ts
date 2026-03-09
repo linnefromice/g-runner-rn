@@ -108,6 +108,7 @@ export const ja: Translations = {
     SD_HighSpeed: 'High Speed',
     SD_Sniper: 'スナイパー',
     SD_Scatter: 'スキャッター',
+    SD_Guardian: 'ガーディアン',
     SD_Awakened: 'Awakened',
   },
   abilities: {
@@ -115,6 +116,8 @@ export const ja: Translations = {
     explosion_radius: '爆発',
     pierce: '貫通',
     homing_invincible: 'ホーミング + 無敵',
+    shield_pierce: 'シールド貫通',
+    damage_reduce: 'ダメージ軽減',
   },
   howToPlay: howToPlayJa,
 };

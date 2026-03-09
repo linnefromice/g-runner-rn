@@ -6,7 +6,8 @@ export type FormSkillStatType =
   | 'fireRate'
   | 'damage'
   | 'moveSpeed'
-  | 'aoeRadius';
+  | 'aoeRadius'
+  | 'damageReduce';
 
 export type FormSkillPassiveId =
   | 'pierce'
@@ -22,7 +23,11 @@ export type FormSkillPassiveId =
   | 'weak_homing'
   | 'armor'
   | 'graze_expand'
-  | 'critical_chance';
+  | 'critical_chance'
+  | 'hp_regen'
+  | 'counter_shot'
+  | 'shield'
+  | 'ex_on_hit';
 
 export type FormSkillEffect =
   | { type: 'stat_multiply'; stat: FormSkillStatType; value: number }

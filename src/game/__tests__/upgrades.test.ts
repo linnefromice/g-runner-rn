@@ -20,6 +20,17 @@ describe('upgrades', () => {
       expect(getUpgradeCost('atk', 9)).toBe(1000);
     });
 
+    test('DEF cost scales correctly', () => {
+      expect(getUpgradeCost('def', 0)).toBe(150);
+      expect(getUpgradeCost('def', 2)).toBe(450);
+      expect(getUpgradeCost('def', 4)).toBe(750);
+    });
+
+    test('Credit Boost cost scales correctly', () => {
+      expect(getUpgradeCost('creditBoost', 0)).toBe(200);
+      expect(getUpgradeCost('creditBoost', 4)).toBe(1000);
+    });
+
     test('returns Infinity for unknown stat', () => {
       expect(getUpgradeCost('unknown', 0)).toBe(Infinity);
     });
@@ -38,6 +49,18 @@ describe('upgrades', () => {
 
     test('returns cumulative effect for Speed', () => {
       expect(getUpgradeEffect('speed', 3)).toBeCloseTo(0.15);
+    });
+
+    test('returns cumulative effect for DEF', () => {
+      expect(getUpgradeEffect('def', 0)).toBe(0);
+      expect(getUpgradeEffect('def', 3)).toBeCloseTo(0.09);
+      expect(getUpgradeEffect('def', 5)).toBeCloseTo(0.15);
+    });
+
+    test('returns cumulative effect for Credit Boost', () => {
+      expect(getUpgradeEffect('creditBoost', 0)).toBe(0);
+      expect(getUpgradeEffect('creditBoost', 3)).toBeCloseTo(0.3);
+      expect(getUpgradeEffect('creditBoost', 5)).toBeCloseTo(0.5);
     });
 
     test('returns 0 for unknown stat', () => {
@@ -83,6 +106,18 @@ describe('upgrades', () => {
 
     test('Speed has max level 5', () => {
       expect(UPGRADE_CONFIG.speed.maxLevel).toBe(5);
+    });
+
+    test('DEF has max level 5 and 3% per level', () => {
+      expect(UPGRADE_CONFIG.def.maxLevel).toBe(5);
+      expect(UPGRADE_CONFIG.def.effect).toBeCloseTo(0.03);
+      expect(UPGRADE_CONFIG.def.costPerLevel).toBe(150);
+    });
+
+    test('Credit Boost has max level 5 and 10% per level', () => {
+      expect(UPGRADE_CONFIG.creditBoost.maxLevel).toBe(5);
+      expect(UPGRADE_CONFIG.creditBoost.effect).toBeCloseTo(0.1);
+      expect(UPGRADE_CONFIG.creditBoost.costPerLevel).toBe(200);
     });
   });
 
