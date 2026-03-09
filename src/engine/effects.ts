@@ -41,6 +41,7 @@ import {
   GRAZE_RING_DURATION,
   SCORE_POPUP_THRESHOLD_MEDIUM,
   SCORE_POPUP_THRESHOLD_LARGE,
+  PARTICLE_COMBO_MAX_COUNT,
 } from '@/constants/balance';
 import { SCORE_POPUP_COLORS } from '@/constants/colors';
 
@@ -206,6 +207,10 @@ export function onGraze(entities: GameEntities, x: number, y: number, tier: Graz
   spawnScorePopup(entities, x, y, `+${score}`, color);
   // Graze ring visual effect (F3)
   entities.grazeRingTimer = GRAZE_RING_DURATION;
+}
+
+export function onComboMax(entities: GameEntities, x: number, y: number) {
+  spawnParticles(entities, x, y, PARTICLE_COMBO_MAX_COUNT, '#FFD600', 300, PARTICLE_DEFAULT_SPEED * 0.8, PARTICLE_DEFAULT_SIZE, 'radial');
 }
 
 export function onDebrisDestroy(entities: GameEntities, x: number, y: number) {

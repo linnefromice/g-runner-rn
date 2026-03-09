@@ -86,6 +86,8 @@ export function createGameEntities(
     justTFTimer: 0,
     shockwaveTimer: 0,
     grazeRingTimer: 0,
+    gateFlashTimer: 0,
+    gateFlashColor: '#FFFFFF',
     awakenedTimer: 0,
     exBurstTimer: 0,
     exBurstTickTimer: 0,

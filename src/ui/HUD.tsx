@@ -206,6 +206,9 @@ function BossHPBar({
 
   if (ratio < 0) return null;
 
+  // A2: dynamic boss HP bar color (green → yellow → red)
+  const bossHpColor = ratio > 0.6 ? '#00FF88' : ratio > 0.3 ? '#FFD600' : COLORS.neonRed;
+
   return (
     <View style={styles.bossHpContainer}>
       <Text style={styles.bossHpLabel}>{t.hud.boss ?? 'BOSS'}</Text>
@@ -213,7 +216,10 @@ function BossHPBar({
         <View
           style={[
             styles.bossHpFill,
-            { width: `${Math.max(0, ratio * 100)}%` as `${number}%` },
+            {
+              width: `${Math.max(0, ratio * 100)}%` as `${number}%`,
+              backgroundColor: bossHpColor,
+            },
           ]}
         />
       </View>

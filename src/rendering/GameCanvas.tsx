@@ -424,6 +424,16 @@ function GameCanvasInner({ renderData, popupData, scrollY, overlayState, scale }
       <Rect x={0} y={0} width={width} height={height} color="#440011" opacity={useDerivedValue(() => overlayState.value.bossPhaseOpacity)} />
       {/* Awakened mode overlay: golden glow (E2) */}
       <Rect x={0} y={0} width={width} height={height} color="#FFD60033" opacity={useDerivedValue(() => overlayState.value.awakenedOpacity)} />
+      {/* Gate pass flash (B1) — brief colored flash */}
+      <Rect x={0} y={0} width={width} height={height}
+        color={useDerivedValue(() => overlayState.value.gateFlashColor)}
+        opacity={useDerivedValue(() => overlayState.value.gateFlashOpacity)}
+      />
+      {/* EX gauge full flash (B3) — brief cyan flash */}
+      <Rect x={0} y={0} width={width} height={height} color="#00E5FF"
+        opacity={useDerivedValue(() => overlayState.value.exFlashOpacity)}
+        blendMode="screen"
+      />
       {/* Low HP danger overlay: red edges pulsing (C2) */}
       <Rect x={0} y={0} width={width} height={height} opacity={useDerivedValue(() => overlayState.value.dangerOpacity)}>
         <LinearGradient

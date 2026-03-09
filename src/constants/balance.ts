@@ -244,3 +244,19 @@ export const SCORE_POPUP_THRESHOLD_LARGE = 300;
 /** Spawn scale-in (A3) — initial scale factor during fade-in */
 export const SPAWN_SCALE_MIN = 0.5;
 
+/** Laser warning pulse speed (rad/s) */
+export const LASER_WARNING_PULSE_SPEED = 8;
+
+/** Bullet stretch based on speed */
+export const BULLET_STRETCH_DIVISOR = 500;
+export const BULLET_STRETCH_MAX = 1.8;
+
+/** Gate pass screen flash (B1) */
+export const GATE_FLASH_DURATION = 120;
+
+/** EX full screen flash (B3) */
+export const EX_FULL_FLASH_DURATION = 150;
+
+/** Combo max particles (B2) */
+export const PARTICLE_COMBO_MAX_COUNT = 4;
+
