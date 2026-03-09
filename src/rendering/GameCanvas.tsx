@@ -115,6 +115,7 @@ function EntitySlot({
   const pathStr = useDerivedValue(() => renderData.value[index]?.path ?? '');
   const type = useDerivedValue(() => renderData.value[index]?.type ?? '');
   const glowPathStr = useDerivedValue(() => renderData.value[index]?.glowPath ?? '');
+  // Derive glowColor from pre-computed field and blendMode from type — avoids 2 extra useDerivedValues per slot
   const glowColor = useDerivedValue(() => renderData.value[index]?.glowColor ?? 'transparent');
   const blendMode = useDerivedValue(() => renderData.value[index]?.blendMode as any);
 
@@ -315,16 +316,16 @@ function GridHLine({
 }
 
 function ScanlineOverlay({ width, height }: { width: number; height: number }) {
-  const TILE_H = SCANLINE_PITCH * 64;
+  // Texture height must match screen height to avoid scaling (fit="fill" stretches 1:1)
+  const lineCount = Math.ceil(height / SCANLINE_PITCH);
   const texture = useTexture(
     <Group>
-      {Array.from({ length: Math.floor(TILE_H / SCANLINE_PITCH) }, (_, i) => (
-        <Rect key={i} x={0} y={i * SCANLINE_PITCH} width={4} height={1} color="#000000" />
+      {Array.from({ length: lineCount }, (_, i) => (
+        <Rect key={i} x={0} y={i * SCANLINE_PITCH} width={1} height={1} color="#000000" />
       ))}
     </Group>,
-    { width: 4, height: TILE_H }
+    { width: 1, height: lineCount * SCANLINE_PITCH }
   );
-  if (!texture) return null;
   return (
     <Image
       image={texture}
@@ -333,7 +334,7 @@ function ScanlineOverlay({ width, height }: { width: number; height: number }) {
       width={width}
       height={height}
       opacity={SCANLINE_OPACITY}
-      fit="cover"
+      fit="fill"
     />
   );
 }

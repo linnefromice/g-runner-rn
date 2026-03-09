@@ -2,7 +2,7 @@ import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
 import type { RenderEntity } from '@/types/rendering';
 import type { SharedValue } from 'react-native-reanimated';
-import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY } from '@/constants/balance';
+import { IFRAME_BLINK_INTERVAL, SHOCKWAVE_EFFECT_DURATION, JUST_TF_SHOCKWAVE_RADIUS, EX_BURST_WIDTH, BOSS_LASER_WIDTH, TRAIL_HISTORY_SIZE, TRAIL_BASE_OPACITY, TRAIL_OPACITY_DECAY, GLOW_SCALE } from '@/constants/balance';
 import { COLORS, GATE_COLORS } from '@/constants/colors';
 import { getEntityPath } from '@/rendering/shapes';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
@@ -23,7 +23,6 @@ function buildPath(type: string, x: number, y: number, w: number, h: number, sca
 }
 
 function buildGlowPath(type: string, x: number, y: number, w: number, h: number, scale: number): string | undefined {
-  const GLOW_SCALE = 1.4;
   const gw = w * GLOW_SCALE;
   const gh = h * GLOW_SCALE;
   const gx = x + (w - gw) / 2;
@@ -67,10 +66,12 @@ export function createSyncRenderSystem(
       });
     }
 
-    // Player trail (afterimage) — drawn behind player
+    // Player trail + player rendering share these values
     const p = entities.player;
+    const playerType = p.active ? `player_${useGameSessionStore.getState().currentForm}` : '';
+
+    // Player trail (afterimage) — drawn behind player
     if (p.active) {
-      const playerType = `player_${useGameSessionStore.getState().currentForm}`;
       for (let i = 0; i < TRAIL_HISTORY_SIZE; i++) {
         const idx = (p.trailIndex - i - 1 + TRAIL_HISTORY_SIZE * 2) % TRAIL_HISTORY_SIZE;
         const pos = p.trailHistory[idx];
@@ -98,7 +99,6 @@ export function createSyncRenderSystem(
       if (p.isInvincible) {
         opacity = Math.floor(p.invincibleTimer / IFRAME_BLINK_INTERVAL) % 2 === 0 ? 0.3 : 1.0;
       }
-      const playerType = `player_${useGameSessionStore.getState().currentForm}`;
       out.push({
         type: playerType,
         x: p.x,
