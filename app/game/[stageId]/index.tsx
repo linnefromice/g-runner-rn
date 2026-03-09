@@ -10,6 +10,7 @@ import { HUD } from '@/ui/HUD';
 import { PauseMenu } from '@/ui/PauseMenu';
 import { SkillChoiceOverlay } from '@/ui/SkillChoiceOverlay';
 import { useGameSessionStore } from '@/stores/gameSessionStore';
+import { useSaveDataStore } from '@/stores/saveDataStore';
 import { getStage } from '@/game/stages';
 import { getFormDefinition } from '@/game/forms';
 import { createGameEntities } from '@/engine/createGameEntities';
@@ -27,7 +28,7 @@ import { boostLaneSystem } from '@/engine/systems/BoostLaneSystem';
 import { createMovementSystem } from '@/engine/systems/MovementSystem';
 import { createShootingSystem } from '@/engine/systems/ShootingSystem';
 import { createEnemyAISystem } from '@/engine/systems/EnemyAISystem';
-import { createSpawnSystem } from '@/engine/systems/SpawnSystem';
+import { createSpawnSystem, createEndlessSpawnSystem } from '@/engine/systems/SpawnSystem';
 import { collisionSystem } from '@/engine/systems/CollisionSystem';
 import { gateSystem } from '@/engine/systems/GateSystem';
 import { iframeSystem } from '@/engine/systems/IFrameSystem';
@@ -87,6 +88,15 @@ export default function GameScreen() {
     const unsub = useGameSessionStore.subscribe((state) => {
       if (state.isGameOver || state.isStageClear) {
         setRunning(false);
+        // Save endless mode records
+        if (stageIdNum === 99) {
+          const saveStore = useSaveDataStore.getState();
+          const session = useGameSessionStore.getState();
+          saveStore.updateEndlessRecord(session.finalStageTime, session.score);
+          if (session.finalStageTime >= 300) {
+            saveStore.unlockAchievement('endless_survivor');
+          }
+        }
         setTimeout(() => {
           router.replace(`/game/${stageIdNum}/result`);
         }, 1000);
@@ -107,7 +117,7 @@ export default function GameScreen() {
     createMovementSystem(getForm),
     createShootingSystem(getForm),
     createEnemyAISystem(stage.difficulty),
-    createSpawnSystem(stage),
+    stageIdNum === 99 ? createEndlessSpawnSystem() : createSpawnSystem(stage),
     transformGaugeSystem,
     awakenedSystem,
     exBurstSystem,
