@@ -141,10 +141,11 @@ export default function GameScreen() {
   useEffect(() => {
     const sub = AppState.addEventListener('change', (nextState) => {
       if (nextState !== 'active') {
-        const { isGameOver, isStageClear } = useGameSessionStore.getState();
-        if (!isGameOver && !isStageClear) {
+        const { isGameOver, isStageClear, pendingSkillChoice } = useGameSessionStore.getState();
+        if (!isGameOver && !isStageClear && !pendingSkillChoice) {
           setRunning(false);
           useGameSessionStore.getState().setPaused(true);
+          setShowPauseMenu(true);
         }
       }
     });
@@ -193,6 +194,7 @@ export default function GameScreen() {
     setShowPauseMenu(false);
     useGameSessionStore.getState().setPaused(false);
     setRunning(true);
+    AudioManager.resumeBgm();
   }, []);
 
   const handleExit = useCallback(() => {
