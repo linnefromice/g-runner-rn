@@ -106,5 +106,6 @@ export function createGameEntities(
     shakeOffsetY: 0,
     particles: Array.from({ length: MAX_PARTICLES }, createInactiveParticle),
     scorePopups: Array.from({ length: MAX_SCORE_POPUPS }, createInactiveScorePopup),
+    shieldRegenTimer: 0,
   };
 }

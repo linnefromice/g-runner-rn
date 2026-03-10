@@ -23,12 +23,24 @@ export const transformGaugeSystem: GameSystem<GameEntities> = (entities, { time 
     }
   }
 
-  // Passive: hp_regen — recover 1 HP per second
+  // Resolve form skills for passive checks
   const formXPState = store.formXP[store.currentForm];
   if (formXPState) {
     const skills = resolveFormSkills(store.currentForm, formXPState.skills);
+    // Passive: hp_regen — recover 1 HP per second
     if (skills.passives.has('hp_regen') && store.hp < store.maxHp) {
       store.heal(time.delta / 1000);
+    }
+    // Passive: shield — regenerate shield after cooldown
+    if (skills.passives.has('shield')) {
+      if (store.shieldHp <= 0) {
+        if (entities.shieldRegenTimer > 0) {
+          entities.shieldRegenTimer = Math.max(0, entities.shieldRegenTimer - time.delta);
+        }
+        if (entities.shieldRegenTimer <= 0) {
+          store.setShieldHp(1);
+        }
+      }
     }
   }
 

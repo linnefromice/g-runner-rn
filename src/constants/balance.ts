@@ -292,6 +292,14 @@ export const CARRIER_SPAWN_COUNT = 2;
 /** Splitter spawn offsets */
 export const SPLITTER_SPAWN_OFFSETS = [-20, 0, 20];
 
+/** Phase 3 Passives */
+export const SLOW_ON_HIT_DURATION = 2000;
+export const SLOW_ON_HIT_FACTOR = 0.5;
+export const AUTO_CHARGE_INTERVAL = 3000;
+export const AUTO_CHARGE_DAMAGE_MUL = 3.0;
+export const SHIELD_REGEN_COOLDOWN = 15000;
+export const AFTERIMAGE_DAMAGE_MUL = 0.3;
+
 /** Boss 3 */
 export const BOSS_3_LASER_WIDTH = 40;
 export const BOSS_3_HOMING_COUNT = 2;

@@ -46,6 +46,8 @@ export interface EnemyEntity extends BaseEntity {
   flashTimer: number;
   /** Stage time when entity was spawned (for fade-in effect) */
   spawnTime: number;
+  /** Slow debuff timer (ms) — when > 0, movement speed is halved */
+  slowTimer?: number;
 }
 
 export interface BulletEntity extends BaseEntity {
@@ -198,4 +200,6 @@ export interface GameEntities {
   particles: ParticleEntity[];
   /** Score popup pool */
   scorePopups: ScorePopupEntity[];
+  /** Shield passive regen cooldown timer (ms) */
+  shieldRegenTimer: number;
 }

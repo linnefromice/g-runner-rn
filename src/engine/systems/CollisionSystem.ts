@@ -4,7 +4,7 @@ import { checkAABBOverlap, getPlayerHitbox, getPlayerVisualHitbox, getCenter, ge
 import { createPlayerBullet, deactivateBullet } from '@/engine/entities/Bullet';
 import { createEnemy } from '@/engine/entities/Enemy';
 import { acquireFromPool } from '@/engine/pool';
-import { IFRAME_DURATION, EXPLOSION_RADIUS, ENEMY_STATS, GRAZE_EX_GAIN, GRAZE_TF_GAIN, GRAZE_SCORE, DEBRIS_CONTACT_DAMAGE, GROWTH_GATE_INITIAL_RATIO, GROWTH_GATE_PER_HIT, JUST_TF_SHOCKWAVE_RADIUS, JUST_TF_SHOCKWAVE_DAMAGE, JUST_TF_SCORE, JUST_TF_EX_GAIN, SHOCKWAVE_EFFECT_DURATION, BOSS_COLLISION_DAMAGE, HIT_FLASH_DURATION, GRAZE_CLOSE_EXPAND, GRAZE_EXTREME_EXPAND, GRAZE_CLOSE_SCORE, GRAZE_CLOSE_EX_GAIN, GRAZE_CLOSE_TF_GAIN, GRAZE_EXTREME_SCORE, GRAZE_EXTREME_EX_GAIN, GRAZE_EXTREME_TF_GAIN, FORM_XP_GRAZE, FORM_XP_GRAZE_CLOSE, FORM_XP_GRAZE_EXTREME, SPLITTER_SPAWN_OFFSETS, SENTINEL_SHIELD_REDUCTION, PLAYER_BULLET_SPEED } from '@/constants/balance';
+import { IFRAME_DURATION, EXPLOSION_RADIUS, ENEMY_STATS, GRAZE_EX_GAIN, GRAZE_TF_GAIN, GRAZE_SCORE, DEBRIS_CONTACT_DAMAGE, GROWTH_GATE_INITIAL_RATIO, GROWTH_GATE_PER_HIT, JUST_TF_SHOCKWAVE_RADIUS, JUST_TF_SHOCKWAVE_DAMAGE, JUST_TF_SCORE, JUST_TF_EX_GAIN, SHOCKWAVE_EFFECT_DURATION, BOSS_COLLISION_DAMAGE, HIT_FLASH_DURATION, GRAZE_CLOSE_EXPAND, GRAZE_EXTREME_EXPAND, GRAZE_CLOSE_SCORE, GRAZE_CLOSE_EX_GAIN, GRAZE_CLOSE_TF_GAIN, GRAZE_EXTREME_SCORE, GRAZE_EXTREME_EX_GAIN, GRAZE_EXTREME_TF_GAIN, FORM_XP_GRAZE, FORM_XP_GRAZE_CLOSE, FORM_XP_GRAZE_EXTREME, SPLITTER_SPAWN_OFFSETS, SENTINEL_SHIELD_REDUCTION, PLAYER_BULLET_SPEED, SLOW_ON_HIT_DURATION, SHIELD_REGEN_COOLDOWN } from '@/constants/balance';
 import { AudioManager } from '@/audio/AudioManager';
 import { HapticsManager } from '@/audio/HapticsManager';
 import { generateGateLabel } from '@/engine/entities/Gate';
@@ -77,6 +77,8 @@ function checkPlayerBulletsVsEnemies(entities: GameEntities, store: Store, passi
       const dmgMul = enemy.enemyType === 'sentinel' ? SENTINEL_SHIELD_REDUCTION : 1;
       enemy.hp -= bullet.damage * dmgMul;
       enemy.flashTimer = HIT_FLASH_DURATION;
+      // Passive: slow_on_hit — slow enemy for 2 seconds
+      if (passives.has('slow_on_hit')) enemy.slowTimer = SLOW_ON_HIT_DURATION;
 
       if (bullet.specialAbility === 'pierce') {
         bullet.piercedEnemyIds?.add(enemy.id);
@@ -360,6 +362,18 @@ function applyDamage(
   passives?: Passives,
   damageReduceMul?: number,
 ) {
+  // Passive: shield — absorb one hit completely
+  if (passives?.has('shield') && store.shieldHp > 0) {
+    store.setShieldHp(0);
+    entities.shieldRegenTimer = SHIELD_REGEN_COOLDOWN;
+    player.isInvincible = true;
+    player.invincibleTimer = IFRAME_DURATION;
+    AudioManager.playSe('damage');
+    const pc = getCenter(player);
+    onPlayerHit(entities, pc.x, pc.y);
+    return;
+  }
+
   // Check for damage_reduce ability (form + skill + passive armor)
   const formId = store.currentForm;
   const form = FORM_DEFINITIONS[formId];

@@ -69,6 +69,9 @@ interface GameSessionState {
   bossEntrance: boolean;
   slowMotionFactor: number;
 
+  // Shield passive
+  shieldHp: number;
+
   // Form XP
   formXP: Partial<Record<MechaFormId, FormXPState>>;
   pendingSkillChoice: { formId: MechaFormId; level: number } | null;
@@ -104,6 +107,7 @@ interface GameSessionState {
   setPaused: (value: boolean) => void;
   setBossEntrance: (value: boolean) => void;
   setSlowMotionFactor: (factor: number) => void;
+  setShieldHp: (hp: number) => void;
   addFormXP: (formId: MechaFormId, amount: number) => void;
   selectFormSkill: (formId: MechaFormId, level: number, choice: 'A' | 'B') => void;
   resetSession: (stageId: number, formId?: MechaFormId, secondaryFormId?: MechaFormId) => void;
@@ -142,6 +146,7 @@ const INITIAL_STATE = {
   isStageClear: false,
   bossEntrance: false,
   slowMotionFactor: 1.0,
+  shieldHp: 0,
   formXP: {
     SD_Standard: { xp: 0, level: 0, skills: [] },
     SD_HeavyArtillery: { xp: 0, level: 0, skills: [] },
@@ -284,6 +289,8 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
   setPaused: (value) => set({ isPaused: value }),
   setBossEntrance: (value) => set({ bossEntrance: value }),
   setSlowMotionFactor: (factor) => set({ slowMotionFactor: factor }),
+
+  setShieldHp: (hp) => set({ shieldHp: hp }),
 
   addFormXP: (formId, amount) => set(s => {
     const state = s.formXP[formId];
