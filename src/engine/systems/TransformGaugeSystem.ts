@@ -14,6 +14,14 @@ export const transformGaugeSystem: GameSystem<GameEntities> = (entities, { time 
     entities.shockwaveTimer = Math.max(0, entities.shockwaveTimer - time.delta);
   }
 
+  // Count down transform buff timer
+  if (entities.transformBuffTimer > 0) {
+    entities.transformBuffTimer = Math.max(0, entities.transformBuffTimer - time.delta);
+    if (entities.transformBuffTimer <= 0) {
+      store.deactivateTransformBuff();
+    }
+  }
+
   if (store.isAwakened) return;
   store.addTransformGauge(TRANSFORM_GAIN_PER_SECOND * time.delta / 1000);
 };

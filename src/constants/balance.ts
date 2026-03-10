@@ -99,6 +99,13 @@ export const TRANSFORM_GAIN_ENEMY_KILL = 8;
 export const TRANSFORM_GAIN_GATE_PASS = 12;
 export const TRANSFORM_GAIN_PER_SECOND = 2;
 
+/** Transform Bonus */
+export const TRANSFORM_BONUS_DURATION = 5000;
+export const TRANSFORM_BONUS_HP_HEAL = 5;
+export const TRANSFORM_BONUS_ATK_MUL = 1.25;
+export const TRANSFORM_BONUS_SPEED_MUL = 1.15;
+export const TRANSFORM_BONUS_FIRE_RATE_MUL = 1.2;
+
 /** Explosion bullet */
 export const EXPLOSION_RADIUS = 40;
 

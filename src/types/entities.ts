@@ -164,6 +164,8 @@ export interface GameEntities {
   justTFTimer: number;
   /** Shockwave visual effect timer (ms) */
   shockwaveTimer: number;
+  /** Transform bonus buff countdown timer (ms) */
+  transformBuffTimer: number;
   /** Graze ring visual effect timer (ms) */
   grazeRingTimer: number;
   /** Gate pass flash timer (ms) — B1 */

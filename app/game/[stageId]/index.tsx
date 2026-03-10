@@ -15,7 +15,7 @@ import { getStage } from '@/game/stages';
 import { getFormDefinition } from '@/game/forms';
 import { createGameEntities } from '@/engine/createGameEntities';
 import { getScreenMetrics } from '@/constants/dimensions';
-import { JUST_TF_WINDOW } from '@/constants/balance';
+import { JUST_TF_WINDOW, TRANSFORM_BONUS_HP_HEAL, TRANSFORM_BONUS_DURATION } from '@/constants/balance';
 import type { GameEntities } from '@/types/entities';
 import type { MechaFormId } from '@/types/forms';
 import { onEXBurst } from '@/engine/effects';
@@ -228,9 +228,13 @@ export default function GameScreen() {
   }, []);
 
   const handleTransform = useCallback(() => {
-    const activated = useGameSessionStore.getState().activateTransform();
+    const store = useGameSessionStore.getState();
+    const activated = store.activateTransform();
     if (activated) {
       entitiesRef.current.justTFTimer = JUST_TF_WINDOW;
+      store.heal(TRANSFORM_BONUS_HP_HEAL);
+      store.activateTransformBuff();
+      entitiesRef.current.transformBuffTimer = TRANSFORM_BONUS_DURATION;
     }
   }, []);
 

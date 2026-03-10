@@ -10,6 +10,9 @@ import {
   COMBO_THRESHOLD,
   EX_GAUGE_MAX,
   TRANSFORM_GAUGE_MAX,
+  TRANSFORM_BONUS_ATK_MUL,
+  TRANSFORM_BONUS_SPEED_MUL,
+  TRANSFORM_BONUS_FIRE_RATE_MUL,
   FORM_XP_THRESHOLDS,
 } from '@/constants/balance';
 import { useSaveDataStore } from '@/stores/saveDataStore';
@@ -40,6 +43,10 @@ interface GameSessionState {
   primaryForm: MechaFormId;
   secondaryForm: MechaFormId;
   transformGauge: number;
+  isTransformBuffActive: boolean;
+  transformBuffAtkMul: number;
+  transformBuffSpeedMul: number;
+  transformBuffFireRateMul: number;
 
   // Score / Credits
   score: number;
@@ -80,6 +87,8 @@ interface GameSessionState {
   deactivateEXBurst: () => void;
   addTransformGauge: (amount: number) => void;
   activateTransform: () => boolean;
+  activateTransformBuff: () => void;
+  deactivateTransformBuff: () => void;
   setForm: (formId: MechaFormId) => void;
   addStat: (stat: StatKey, value: number) => void;
   multiplyStat: (stat: StatKey, value: number) => void;
@@ -117,6 +126,10 @@ const INITIAL_STATE = {
   primaryForm: 'SD_Standard' as MechaFormId,
   secondaryForm: 'SD_HeavyArtillery' as MechaFormId,
   transformGauge: 0,
+  isTransformBuffActive: false,
+  transformBuffAtkMul: 1.0,
+  transformBuffSpeedMul: 1.0,
+  transformBuffFireRateMul: 1.0,
   score: 0,
   scoreMultiplier: 1,
   credits: 0,
@@ -190,6 +203,20 @@ export const useGameSessionStore = create<GameSessionState>((set, get) => ({
     });
     return true;
   },
+
+  activateTransformBuff: () => set({
+    isTransformBuffActive: true,
+    transformBuffAtkMul: TRANSFORM_BONUS_ATK_MUL,
+    transformBuffSpeedMul: TRANSFORM_BONUS_SPEED_MUL,
+    transformBuffFireRateMul: TRANSFORM_BONUS_FIRE_RATE_MUL,
+  }),
+
+  deactivateTransformBuff: () => set({
+    isTransformBuffActive: false,
+    transformBuffAtkMul: 1.0,
+    transformBuffSpeedMul: 1.0,
+    transformBuffFireRateMul: 1.0,
+  }),
 
   setForm: (formId) =>
     set((s) => ({

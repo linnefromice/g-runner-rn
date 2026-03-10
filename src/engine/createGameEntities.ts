@@ -85,6 +85,7 @@ export function createGameEntities(
     isPlayerBoosted: false,
     justTFTimer: 0,
     shockwaveTimer: 0,
+    transformBuffTimer: 0,
     grazeRingTimer: 0,
     gateFlashTimer: 0,
     gateFlashColor: '#FFFFFF',
