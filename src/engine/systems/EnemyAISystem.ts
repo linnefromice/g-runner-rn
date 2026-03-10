@@ -1,7 +1,7 @@
 import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
 import type { DifficultyParams } from '@/types/stages';
-import { ENEMY_STATS, ENEMY_BULLET_SPEED, BASE_SCROLL_SPEED, PATROL_SPEED, PHALANX_SPEED, JUGGERNAUT_SCROLL_FACTOR, DODGER_DETECT_RADIUS, DODGER_SPEED, DODGER_COOLDOWN, SUMMONER_INTERVAL, SUMMONER_MAX_SPAWNS, CARRIER_SPAWN_INTERVAL, CARRIER_SPAWN_COUNT } from '@/constants/balance';
+import { ENEMY_STATS, ENEMY_BULLET_SPEED, BASE_SCROLL_SPEED, RUSH_SPEED, PATROL_SPEED, PHALANX_SPEED, JUGGERNAUT_SCROLL_FACTOR, DODGER_DETECT_RADIUS, DODGER_SPEED, DODGER_COOLDOWN, SUMMONER_INTERVAL, SUMMONER_MAX_SPAWNS, CARRIER_SPAWN_INTERVAL, CARRIER_SPAWN_COUNT } from '@/constants/balance';
 import { createEnemyBullet } from '@/engine/entities/Bullet';
 import { createEnemy } from '@/engine/entities/Enemy';
 import { acquireFromPool } from '@/engine/pool';
@@ -30,6 +30,16 @@ export function createEnemyAISystem(difficulty: DifficultyParams): GameSystem<Ga
 
       // Movement
       switch (enemy.enemyType) {
+        case 'rush': {
+          // Fast descent toward player's X position + contact damage
+          enemy.y += RUSH_SPEED * dt;
+          if (player.active) {
+            const targetX = player.x + player.width / 2 - enemy.width / 2;
+            const dx = targetX - enemy.x;
+            enemy.x += Math.sign(dx) * Math.min(Math.abs(dx), RUSH_SPEED * 0.5 * dt);
+          }
+          break;
+        }
         case 'patrol': {
           enemy.x += enemy.moveDirection * PATROL_SPEED * dt;
           if (enemy.x < 16 || enemy.x + enemy.width > 304) {

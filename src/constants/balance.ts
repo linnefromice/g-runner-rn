@@ -83,6 +83,7 @@ export const BOSS_LASER_TICK_INTERVAL = 300;
 export const BOSS_LASER_COOLDOWN = 4000;
 
 /** Enemy AI movement (logical units/sec) */
+export const RUSH_SPEED = 200;
 export const PATROL_SPEED = 60;
 export const PHALANX_SPEED = 40;
 export const JUGGERNAUT_SCROLL_FACTOR = 0.3;
