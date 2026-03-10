@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AppState, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import Animated, { useSharedValue } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withDelay, withTiming, runOnJS } from 'react-native-reanimated';
 import { useGameLoop, type GameSystem } from '@/engine/GameLoop';
 import { GameCanvas, type RenderEntity } from '@/rendering/GameCanvas';
 import type { PopupRenderData, OverlayState } from '@/engine/systems/SyncRenderSystem';
@@ -52,6 +52,9 @@ export default function GameScreen() {
 
   const [running, setRunning] = useState(true);
 
+  // Fade overlay: 1 = fully black, 0 = transparent
+  const fadeOpacity = useSharedValue(1);
+
   // Initialize entities pool with stage metadata
   const entitiesRef = useRef<GameEntities>(
     Object.assign(createGameEntities(width, height), {
@@ -83,6 +86,17 @@ export default function GameScreen() {
     };
   }, []);
 
+  // Fade in on mount (delay 100ms for Canvas initialization)
+  useEffect(() => {
+    fadeOpacity.value = withDelay(100, withTiming(0, { duration: 400 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Navigate to result screen (called from Reanimated callback via runOnJS)
+  const navigateToResult = useCallback(() => {
+    router.replace(`/game/${stageIdNum}/result`);
+  }, [stageIdNum, router]);
+
   // Watch for game-over or stage-clear
   useEffect(() => {
     const unsub = useGameSessionStore.subscribe((state) => {
@@ -97,13 +111,16 @@ export default function GameScreen() {
             saveStore.unlockAchievement('endless_survivor');
           }
         }
-        setTimeout(() => {
-          router.replace(`/game/${stageIdNum}/result`);
-        }, 1000);
+        // Fade out → navigate to result
+        fadeOpacity.value = withTiming(1, { duration: 800 }, (finished) => {
+          if (finished) {
+            runOnJS(navigateToResult)();
+          }
+        });
       }
     });
     return unsub;
-  }, [stageIdNum, router]);
+  }, [stageIdNum, fadeOpacity, navigateToResult]);
 
   // Build systems
   const getForm = useCallback(
@@ -217,6 +234,12 @@ export default function GameScreen() {
     }
   }, []);
 
+  const fadeStyle = useAnimatedStyle(() => ({
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#0a0a14',
+    opacity: fadeOpacity.value,
+  }));
+
   return (
     <View style={styles.container}>
       <GestureDetector gesture={gesture}>
@@ -237,6 +260,8 @@ export default function GameScreen() {
       {showPauseMenu && (
         <PauseMenu onResume={handleResume} onExit={handleExit} />
       )}
+      {/* Fade overlay — topmost layer */}
+      <Animated.View style={fadeStyle} pointerEvents="none" />
     </View>
   );
 }
