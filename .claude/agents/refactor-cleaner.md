@@ -44,21 +44,20 @@ sd-g-runner/
 ### 検出コマンド
 
 ```bash
-# 未使用のエクスポート/ファイル/依存関係
-npx knip
-
-# 未使用の依存関係
-npx depcheck
-
-# 未使用のTypeScriptエクスポート
-npx ts-prune
-
-# 型チェック
+# 型チェック（常に使用可能）
 npx tsc --noEmit
 
-# Lint
+# Lint（常に使用可能）
 npx expo lint
+
+# 未使用のエクスポート/ファイル/依存関係（インストール済みの場合）
+npx knip          # 未インストールの場合は npx で一時実行可能
+npx depcheck      # 未インストールの場合は npx で一時実行可能
+npx ts-prune      # 未インストールの場合は npx で一時実行可能
 ```
+
+> **Note**: `knip`, `depcheck`, `ts-prune` はプロジェクトの devDependencies に含まれていない場合がある。
+> `npx` で一時実行するか、`grep` での手動検索で代替すること。
 
 ---
 

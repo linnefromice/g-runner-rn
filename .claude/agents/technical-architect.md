@@ -24,10 +24,12 @@ tools: Read, Grep, Glob, WebFetch, WebSearch
 
 ## 参照すべきドキュメント
 
-| ドキュメント     | パス                         |
-| ---------------- | ---------------------------- |
-| 要件仕様書       | `docs/v1/REQUIREMENTS-r3.md` |
-| プロジェクト概要 | `CLAUDE.md`                  |
+| ドキュメント       | パス                         |
+| ------------------ | ---------------------------- |
+| 要件仕様書         | `docs/v1/REQUIREMENTS-r3.md` |
+| プロジェクト概要   | `CLAUDE.md`                  |
+| アーキテクチャ概要 | `docs/ARCHITECTURE.md`       |
+| ゲームデザイン     | `docs/GAME_DESIGN.md`        |
 
 ---
 
@@ -282,4 +284,3 @@ export interface PlayerEntity extends GameEntity {
 - **Planner**: 実装計画への設計反映
 - **Code Reviewer**: 設計レビュー
 - **QA Specialist**: テスト戦略の策定
-```
