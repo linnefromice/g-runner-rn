@@ -2,6 +2,7 @@
 name: qa-specialist
 description: "テスト戦略、品質保証の専門家。テストケース設計、バグ検出、パフォーマンステスト、ゲームバランステスト設計時に使用。"
 tools: Read, Grep, Glob, Bash
+model: opus
 ---
 
 # QA Specialist

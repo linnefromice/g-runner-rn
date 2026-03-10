@@ -1,7 +1,46 @@
-# 推奨スキル・プラグイン活用ルール
+# スキル・プラグイン活用ルール
 
-本プロジェクトで積極的に活用すべきスキル・プラグインの使用指針。
+本プロジェクトのスキル・プラグイン使用指針。
 該当する場面では、手動で同等の作業をするのではなく、スキルを呼び出すこと。
+
+---
+
+## 0. 標準開発フロー（必須）
+
+本プロジェクトでは以下のフローを**標準**とする。pipeline-manifest 等の代替手段は使用しない。
+
+### 新機能開発フロー
+
+```
+1. superpowers:brainstorming                  ← 設計対話（コード着手前に必須）
+2. superpowers:writing-plans                  ← 実装計画を docs/plans/ に書く
+3. feature-dev:code-explorer                  ← 既存コードのパターン理解
+4. context7                                   ← ライブラリ API 確認
+5. superpowers:subagent-driven-development    ← タスクごとにサブエージェントで実装
+6. vercel-react-native-skills                 ← RN ベストプラクティス確認
+7. feature-dev:code-reviewer                  ← セルフレビュー
+8. superpowers:finishing-a-development-branch  ← PR 作成・完了
+```
+
+### バグ修正フロー
+
+```
+1. superpowers:systematic-debugging            ← 推測せず体系的に原因特定
+2. context7                                    ← API 仕様確認
+3. ralph-loop:ralph-loop                       ← 修正→テスト反復
+4. superpowers:verification-before-completion  ← 検証
+```
+
+### 計画ドキュメントの命名規約
+
+計画ドキュメントは `docs/plans/` に配置する。
+
+| ファイル | 命名 | 内容 |
+|----------|------|------|
+| 設計書 | `YYYY-MM-DD-<topic>-design.md` | brainstorming の結果を設計ドキュメント化 |
+| 実装計画 | `YYYY-MM-DD-<topic>.md` | writing-plans で作成する実装ステップ |
+
+**判断基準**: 「1行の修正」以外のすべての開発タスクはこのフローに従う。
 
 ---
 
@@ -65,29 +104,19 @@
 - lint / tsc エラーを連続で修正する時
 - 複数ファイルに渡る一貫した変更を段階的に適用する時
 
-### 使用方法
-
-`ralph-loop:ralph-loop` で開始。ループ内で自動的にテスト実行→失敗箇所修正→再テストを繰り返す。
-
 **判断基準**: 「テスト/lint を通すまで何回か修正が必要そう」と予想される場面で使用する。
 
 ---
 
 ## 4. Feature Dev（開発支援系）
 
-コードベースの深い理解に基づく開発支援。3つの専門エージェントから構成。
+コードベースの深い理解に基づく開発支援。3つの専門エージェント（スキル）から構成。
 
-| エージェント | 用途 | 使用タイミング |
-|------------|------|--------------|
+| スキル | 用途 | 使用タイミング |
+|--------|------|--------------|
 | `feature-dev:code-explorer` | 既存コードの実行パス追跡、依存分析 | 新機能追加前にコードベースを理解する時 |
 | `feature-dev:code-architect` | 既存パターンに沿った設計提案 | アーキテクチャ判断が必要な時 |
 | `feature-dev:code-reviewer` | バグ・ロジックエラー・セキュリティの検出 | 実装完了後、コミット前 |
-
-### 使用タイミング
-
-- **新しいシステム追加時**: `code-explorer` で既存システムのパターンを分析 → `code-architect` で設計
-- **既存システムの拡張時**: `code-explorer` で影響範囲を特定
-- **PR 作成前**: `code-reviewer` でセルフレビュー
 
 **判断基準**: 「このコードベースのパターンに従っているか自信がない」場面で使用する。
 
@@ -116,29 +145,3 @@ React Native / Expo のベストプラクティスを適用するスキル。
 | EAS Build 設定 | プロファイル、環境変数 |
 
 **判断基準**: React Native / Expo に関わるコードを書く・修正するすべての場面で使用を検討する。
-
----
-
-## 推奨フロー例
-
-### 新機能開発
-
-```
-1. superpowers:brainstorming     ← 設計対話
-2. superpowers:writing-plans     ← 実装計画
-3. feature-dev:code-explorer     ← 既存コード理解
-4. context7                      ← ライブラリ API 確認
-5. superpowers:subagent-driven-development ← 実装
-6. vercel-react-native-skills    ← RN ベストプラクティス確認
-7. feature-dev:code-reviewer     ← セルフレビュー
-8. superpowers:finishing-a-development-branch ← 完了
-```
-
-### バグ修正
-
-```
-1. superpowers:systematic-debugging ← 原因特定
-2. context7                         ← API 仕様確認
-3. ralph-loop:ralph-loop            ← 修正→テスト反復
-4. superpowers:verification-before-completion ← 検証
-```

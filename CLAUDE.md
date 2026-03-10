@@ -164,39 +164,10 @@ Systems bridge game→UI: e.g., `CollisionSystem` calls `gameSessionStore.getSta
 
 ## Claude Code Configuration
 
-`.claude/` ディレクトリに Claude Code 用の設定・ルール・エージェント定義を格納。
+`.claude/` ディレクトリに Claude Code 用の設定を格納。各ファイルの frontmatter に詳細説明あり。
 
-### Rules (`.claude/rules/`)
+- **Rules** (`.claude/rules/`): git-workflow, task-completion, reanimated-safety, recommended-skills 等
+- **Agents** (`.claude/agents/`): code-reviewer, planner, qa-specialist, technical-architect 等
+- **Commands** (`.claude/commands/`): create-pr, merge-pr, auto-merge-pr
 
-| ファイル                  | 内容                                       |
-| ------------------------- | ------------------------------------------ |
-| `git-workflow.md`         | コミット規約、ブランチ命名、PR手順         |
-| `task-completion.md`      | タスク完了チェックリスト                   |
-| `agent-teams.md`          | Agent Teams 自動起動の判断基準             |
-| `component-reuse.md`      | コンポーネント・モジュール共通化ルール     |
-| `pipeline-manifest.md`    | パイプラインマニフェスト仕様               |
-| `reanimated-safety.md`    | Reanimated + RNGH ワークレット安全パターン |
-| `recommended-skills.md`   | 推奨スキル・プラグイン活用ルール           |
-
-### Agents (`.claude/agents/`)
-
-| エージェント               | 用途                                         |
-| -------------------------- | -------------------------------------------- |
-| `code-reviewer`            | コード品質・パフォーマンスレビュー           |
-| `planner`                  | 実装計画の作成                               |
-| `qa-specialist`            | テスト戦略・品質保証                         |
-| `refactor-cleaner`         | デッドコード検出・クリーンアップ             |
-| `documentation-maintainer` | ドキュメント整合性維持                       |
-| `technical-architect`      | ゲームアーキテクチャ・システム設計           |
-
-## Agent Team Operational Rules
-
-複雑なタスクでは Agent Teams が自動的に組成されます。
-詳細は `.claude/rules/agent-teams.md` を参照してください。
-
-### Teammate の行動規範
-
-- **能動的な取得**: 共有タスクリストから能動的に未着手タスクを claim すること
-- **即時通信**: 共通インターフェースに影響が出る変更は、即座に関連 Teammate にメッセージを送ること
-- **品質ゲート**: テストを実行せずにタスクを Complete とマークしないこと
-- **コンテキスト共有**: 発見した重要な情報は他の Teammate と共有すること
+Agent Teams の起動基準・行動規範は `.claude/rules/agent-teams.md` を参照。

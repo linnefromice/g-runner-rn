@@ -6,14 +6,33 @@ Players pilot a customizable mecha through scrolling stages, passing through gat
 
 ## Features
 
-- 5 stages with timeline-based enemy/gate spawning and boss encounters
-- 4 mecha forms (Standard, Heavy Artillery, High Speed, Awakened) with unique abilities
-- Gate system: Enhance, Recovery, Tradeoff, Refit — each with strategic trade-offs
+### Stages & Progression
+- 15 stages with timeline-based enemy/gate spawning and 3 boss encounters (every 5 stages)
+- Endless mode with procedurally generated waves and scaling difficulty
+- 10 achievements with credit rewards
+
+### Mecha Forms
+- 7 mecha forms: Standard, Heavy Artillery, High Speed, Sniper, Scatter, Guardian, Awakened
+- Transform system with Primary/Secondary form switching mid-stage
+- Form-specific ship shapes and visual differentiation
 - Combo & Awakening mechanic (3 consecutive Enhance gates triggers 10s powered-up form)
-- Transform system with Primary/Secondary form switching
+
+### Combat & Enemies
+- 11 enemy types: Stationary, Patrol, Rush, Swarm, Phalanx, Juggernaut, Dodger, Splitter, Summoner, Sentinel, Carrier
+- 3 visually distinct bosses with unique attack patterns (spread, laser, drones)
+- EX Burst gauge — screen-clearing special attack with shockwave
+- Graze system — near-miss scoring with tiered rewards
+
+### Gates & Strategy
+- 6 gate types: Enhance, Recovery, Tradeoff, Refit, Growth, Roulette
+- Forced-choice gate pairs with strategic trade-offs
+- Boost lanes for score/speed multipliers
+
+### Polish
 - Persistent upgrades (ATK, HP, Speed) and form unlocks via credits
+- Haptic feedback with settings toggle
 - i18n support (English / Japanese) with device language auto-detection
-- 60fps GPU-accelerated rendering via Skia
+- 60fps GPU-accelerated rendering via Skia with particle effects, glow, and screen shake
 
 ## Tech Stack
 
@@ -24,7 +43,7 @@ Players pilot a customizable mecha through scrolling stages, passing through gat
 | Game Loop | Custom `useGameLoop` hook (60fps rAF) |
 | State | [Zustand](https://github.com/pmndrs/zustand) + AsyncStorage |
 | Animation | react-native-reanimated |
-| Sound | expo-av |
+| Sound | expo-av + expo-haptics |
 | i18n | Custom lightweight (expo-localization + locale dictionaries) |
 
 ## Platform Support
@@ -90,7 +109,18 @@ src/
   game/         Data definitions — forms, stages, difficulty, scoring, upgrades
   ui/           React Native HUD components
   i18n/         Internationalization — locale dictionaries and hooks
-  audio/        Sound management (BGM, SE)
+  audio/        Sound management (BGM, SE, haptics)
   constants/    Shared constants — balance, colors, dimensions
   types/        TypeScript type definitions
+docs/           Documentation (see below)
 ```
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Architecture Guide](docs/ARCHITECTURE.md) | Data flow, system pipeline, entity pool, Reanimated safety patterns |
+| [Game Design Overview](docs/GAME_DESIGN.md) | Forms, stages, enemies, gates, bosses, scoring, economy, achievements |
+| [Changelog](docs/CHANGELOG.md) | Version history (v0.1.0–v0.5.0) |
+| [Testing Guide](docs/TESTING.md) | Test strategy, coverage, patterns, adding new tests |
+| [Requirements](docs/v1/REQUIREMENTS-r3.md) | Full game specification (v3.1, authoritative) |
