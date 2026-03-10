@@ -84,11 +84,14 @@ export function createMovementSystem(
 
     if (b.homing) {
       moveHomingBullet(b, entities, dt);
+    } else if (b.vx != null && b.vy != null) {
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
     } else {
       b.y -= b.speed * dt;
     }
 
-    if (b.y + b.height < 0 || b.y > visibleHeight) deactivateBullet(b);
+    if (b.y + b.height < 0 || b.y > visibleHeight || b.x + b.width < -20 || b.x > 340) deactivateBullet(b);
   }
 
   // Move enemy bullets (directional or straight down, with optional sine-wave)

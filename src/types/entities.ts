@@ -62,6 +62,8 @@ export interface BulletEntity extends BaseEntity {
   vy?: number;
   /** Sine-wave horizontal amplitude (logical units). Creates oscillating bullet trajectory. */
   waveAmplitude?: number;
+  /** Whether this bullet scored a critical hit (15% chance with critical_chance passive) */
+  isCritical?: boolean;
 }
 
 export interface GateEntity extends BaseEntity {

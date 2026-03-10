@@ -34,7 +34,13 @@ export function createShootingSystem(getForm: () => MechaFormDefinition): GameSy
 
     const passives = skills?.passives;
     const bulletConfig = form.bulletConfig;
-    const damage = store.atk * form.attackMultiplier * (skills?.damageMul ?? 1) * store.transformBuffAtkMul;
+    let damage = store.atk * form.attackMultiplier * (skills?.damageMul ?? 1) * store.transformBuffAtkMul;
+    // Passive: speed_atk_bonus — ATK scales with speed stat
+    if (passives?.has('speed_atk_bonus')) damage *= (1 + (store.speed - 1) * 0.5);
+    // Passive: critical_chance — 15% chance for 2x damage
+    const hasCrit = passives?.has('critical_chance') ?? false;
+    const isCrit = hasCrit && Math.random() < 0.15;
+    if (isCrit) damage *= 2;
     const isHoming = form.specialAbility === 'homing_invincible' || (passives?.has('weak_homing') ?? false);
     // Passive pierce/explosion overrides form specialAbility
     const specialAbility = passives?.has('pierce') ? 'pierce' as const : form.specialAbility;
@@ -53,12 +59,13 @@ export function createShootingSystem(getForm: () => MechaFormDefinition): GameSy
         speed: bulletSpeed,
         homing: isHoming,
         specialAbility,
+        isCritical: isCrit || undefined,
       });
       acquireFromPool(entities.playerBullets, bullet);
       if (hasDoubleShot) {
         const b2 = createPlayerBullet(centerX + 10, p.y, damage, {
           width: bulletWidth, height: bulletHeight, speed: bulletSpeed,
-          homing: isHoming, specialAbility,
+          homing: isHoming, specialAbility, isCritical: isCrit || undefined,
         });
         acquireFromPool(entities.playerBullets, b2);
       }
@@ -74,6 +81,7 @@ export function createShootingSystem(getForm: () => MechaFormDefinition): GameSy
           speed: bulletSpeed,
           homing: isHoming,
           specialAbility,
+          isCritical: isCrit || undefined,
         });
         if (!acquireFromPool(entities.playerBullets, bullet)) break;
       }
@@ -83,7 +91,7 @@ export function createShootingSystem(getForm: () => MechaFormDefinition): GameSy
           const offsetX = Math.tan((angleDeg * Math.PI) / 180) * 20;
           const b2 = createPlayerBullet(centerX + offsetX + 10, p.y, damage, {
             width: bulletWidth, height: bulletHeight, speed: bulletSpeed,
-            homing: isHoming, specialAbility,
+            homing: isHoming, specialAbility, isCritical: isCrit || undefined,
           });
           if (!acquireFromPool(entities.playerBullets, b2)) break;
         }

@@ -1,10 +1,10 @@
 import type { GameSystem } from '@/engine/GameLoop';
 import type { GameEntities } from '@/types/entities';
 import { checkAABBOverlap, getPlayerHitbox, getPlayerVisualHitbox, getCenter, getDistance, expandHitbox } from '@/engine/collision';
-import { deactivateBullet } from '@/engine/entities/Bullet';
+import { createPlayerBullet, deactivateBullet } from '@/engine/entities/Bullet';
 import { createEnemy } from '@/engine/entities/Enemy';
 import { acquireFromPool } from '@/engine/pool';
-import { IFRAME_DURATION, EXPLOSION_RADIUS, ENEMY_STATS, GRAZE_EX_GAIN, GRAZE_TF_GAIN, GRAZE_SCORE, DEBRIS_CONTACT_DAMAGE, GROWTH_GATE_INITIAL_RATIO, GROWTH_GATE_PER_HIT, JUST_TF_SHOCKWAVE_RADIUS, JUST_TF_SHOCKWAVE_DAMAGE, JUST_TF_SCORE, JUST_TF_EX_GAIN, SHOCKWAVE_EFFECT_DURATION, BOSS_COLLISION_DAMAGE, HIT_FLASH_DURATION, GRAZE_CLOSE_EXPAND, GRAZE_EXTREME_EXPAND, GRAZE_CLOSE_SCORE, GRAZE_CLOSE_EX_GAIN, GRAZE_CLOSE_TF_GAIN, GRAZE_EXTREME_SCORE, GRAZE_EXTREME_EX_GAIN, GRAZE_EXTREME_TF_GAIN, FORM_XP_GRAZE, FORM_XP_GRAZE_CLOSE, FORM_XP_GRAZE_EXTREME, SPLITTER_SPAWN_OFFSETS, SENTINEL_SHIELD_REDUCTION } from '@/constants/balance';
+import { IFRAME_DURATION, EXPLOSION_RADIUS, ENEMY_STATS, GRAZE_EX_GAIN, GRAZE_TF_GAIN, GRAZE_SCORE, DEBRIS_CONTACT_DAMAGE, GROWTH_GATE_INITIAL_RATIO, GROWTH_GATE_PER_HIT, JUST_TF_SHOCKWAVE_RADIUS, JUST_TF_SHOCKWAVE_DAMAGE, JUST_TF_SCORE, JUST_TF_EX_GAIN, SHOCKWAVE_EFFECT_DURATION, BOSS_COLLISION_DAMAGE, HIT_FLASH_DURATION, GRAZE_CLOSE_EXPAND, GRAZE_EXTREME_EXPAND, GRAZE_CLOSE_SCORE, GRAZE_CLOSE_EX_GAIN, GRAZE_CLOSE_TF_GAIN, GRAZE_EXTREME_SCORE, GRAZE_EXTREME_EX_GAIN, GRAZE_EXTREME_TF_GAIN, FORM_XP_GRAZE, FORM_XP_GRAZE_CLOSE, FORM_XP_GRAZE_EXTREME, SPLITTER_SPAWN_OFFSETS, SENTINEL_SHIELD_REDUCTION, PLAYER_BULLET_SPEED } from '@/constants/balance';
 import { AudioManager } from '@/audio/AudioManager';
 import { HapticsManager } from '@/audio/HapticsManager';
 import { generateGateLabel } from '@/engine/entities/Gate';
@@ -32,11 +32,14 @@ export const collisionSystem: GameSystem<GameEntities> = (entities) => {
   const skills = formXPState ? resolveFormSkills(store.currentForm, formXPState.skills) : null;
   const passives = skills?.passives ?? new Set<never>();
 
+  // Passive: double_explosion — double explosion AoE radius
+  const aoeRadiusMul = (skills?.aoeRadiusMul ?? 1) * (passives.has('double_explosion') ? 2 : 1);
+
   // Offensive collisions (player bullets outgoing)
-  checkPlayerBulletsVsEnemies(entities, store, passives, skills?.aoeRadiusMul ?? 1);
-  checkPlayerBulletsVsDebris(entities, store, skills?.aoeRadiusMul ?? 1);
+  checkPlayerBulletsVsEnemies(entities, store, passives, aoeRadiusMul);
+  checkPlayerBulletsVsDebris(entities, store, aoeRadiusMul);
   checkPlayerBulletsVsGrowthGates(entities);
-  checkPlayerBulletsVsBoss(entities, store, passives, skills?.aoeRadiusMul ?? 1);
+  checkPlayerBulletsVsBoss(entities, store, passives, aoeRadiusMul);
 
   // Graze detection
   checkGraze(entities, player, playerHB, store, passives);
@@ -105,6 +108,10 @@ function checkPlayerBulletsVsEnemies(entities: GameEntities, store: Store, passi
         applyEnemyKillReward(enemy, entities);
         // Passive: heal_on_hit — recover 1 HP per kill
         if (passives.has('heal_on_hit')) store.heal(1);
+        // Passive: xp_on_crit — bonus XP on critical kill
+        if (bullet.isCritical && passives.has('xp_on_crit')) {
+          store.addFormXP(store.currentForm, 5);
+        }
       } else if (bullet.specialAbility !== 'pierce') {
         onBulletImpact(entities, hit.x, hit.y);
       }
@@ -369,6 +376,18 @@ function applyDamage(
   store.resetCombo();
   const pc = getCenter(player);
   onPlayerHit(entities, pc.x, pc.y);
+
+  // Passive: counter_shot — fire 8 counter bullets on hit
+  if (passives?.has('counter_shot')) {
+    const counterDamage = store.atk * 0.5;
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI * 2) / 8;
+      const vx = Math.sin(angle) * PLAYER_BULLET_SPEED;
+      const vy = -Math.cos(angle) * PLAYER_BULLET_SPEED;
+      const b = createPlayerBullet(pc.x, pc.y, counterDamage, { vx, vy, speed: 0 });
+      acquireFromPool(entities.playerBullets, b);
+    }
+  }
 }
 
 function applyParryShockwave(entities: GameEntities, store: Store) {
